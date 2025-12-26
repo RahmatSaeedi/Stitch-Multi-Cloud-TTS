@@ -158,29 +158,29 @@
 
     <!-- eSpeak-NG using meSpeak.js library -->
     <!-- meSpeak.js - A JavaScript port of eSpeak that can export WAV files -->
-    <!-- Load meSpeak from jsDelivr CDN (more reliable than masswerk.at) -->
-    <script src="https://cdn.jsdelivr.net/npm/mespeak@2.0.2/src/index.js"></script>
+    <!-- Served locally to avoid CDN blocking and tracking prevention -->
+    <script src="js/lib/mespeak/mespeak.js"></script>
     <script>
         // Configure meSpeak after it loads
         (async function() {
             // Wait a moment for the library to fully initialize
-            await new Promise(resolve => setTimeout(resolve, 200));
+            await new Promise(resolve => setTimeout(resolve, 100));
 
             if (typeof window.meSpeak !== 'undefined' && window.meSpeak !== null) {
                 try {
                     console.log('🔧 Initializing meSpeak library...');
 
-                    // Load default config from jsDelivr
+                    // Load config from local files
                     await new Promise((resolve) => {
-                        window.meSpeak.loadConfig('https://cdn.jsdelivr.net/npm/mespeak@2.0.2/src/mespeak_config.json');
-                        setTimeout(resolve, 600);
+                        window.meSpeak.loadConfig('js/lib/mespeak/mespeak_config.json');
+                        setTimeout(resolve, 500);
                     });
                     console.log('✅ meSpeak config loaded');
 
-                    // Load default English voice from jsDelivr
+                    // Load default English voice from local files
                     await new Promise((resolve) => {
-                        window.meSpeak.loadVoice('https://cdn.jsdelivr.net/npm/mespeak@2.0.2/voices/en/en-us.json');
-                        setTimeout(resolve, 600);
+                        window.meSpeak.loadVoice('js/lib/mespeak/voices/en/en-us.json');
+                        setTimeout(resolve, 500);
                     });
                     console.log('✅ meSpeak voice loaded');
 
@@ -190,10 +190,6 @@
                 }
             } else {
                 console.warn('⚠️ meSpeak library not available. eSpeak-NG will be disabled.');
-                console.log('This may be due to:');
-                console.log('  - CDN connectivity issues');
-                console.log('  - Browser blocking third-party scripts');
-                console.log('  - CORS restrictions');
                 console.log('Falling back to Piper TTS for offline synthesis.');
             }
         })();
