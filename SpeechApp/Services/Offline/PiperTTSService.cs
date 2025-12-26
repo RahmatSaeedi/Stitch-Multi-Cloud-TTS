@@ -204,7 +204,12 @@ public class PiperTTSService : ITTSProvider, IOfflineTTSProvider
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error downloading Piper model: {ex.Message}");
+            Console.WriteLine($"Error downloading Piper model: {ex.GetType().Name} - {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+            }
             return false;
         }
     }

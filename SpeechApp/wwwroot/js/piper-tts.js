@@ -24,8 +24,11 @@ window.piperTTS = {
         if (this.isInitialized) return true;
 
         try {
+            console.log('🔧 Initializing Piper TTS...');
+
             // Open IndexedDB for model storage
             this.db = await this.openDatabase();
+            console.log('✅ IndexedDB opened');
 
             // Wait for Piper library to be available (with retry)
             let retries = 0;
@@ -36,14 +39,31 @@ window.piperTTS = {
 
             if (typeof window.piperTTSLib !== 'undefined') {
                 piperLib = window.piperTTSLib;
+                console.log('✅ Piper library loaded:', piperLib);
+                console.log('Available Piper methods:', Object.keys(piperLib));
+
+                // Check if library has required methods
+                if (typeof piperLib.download === 'function') {
+                    console.log('✅ Piper download method available');
+                } else {
+                    console.warn('⚠️ Piper download method not found');
+                }
+
+                if (typeof piperLib.predict === 'function') {
+                    console.log('✅ Piper predict method available');
+                } else {
+                    console.warn('⚠️ Piper predict method not found');
+                }
             } else {
-                console.warn('Piper TTS library not loaded from CDN');
+                console.error('❌ Piper TTS library not loaded from CDN');
+                console.log('Please check network connectivity and CDN availability');
             }
 
             this.isInitialized = true;
             return true;
         } catch (error) {
             console.error('❌ Failed to initialize Piper TTS:', error);
+            console.error('Stack:', error.stack);
             return false;
         }
     },
@@ -122,26 +142,60 @@ window.piperTTS = {
      */
     async downloadModel(modelId, progressCallback) {
         try {
-            if (!piperLib) {
-                throw new Error('Piper TTS library not loaded');
+            // Ensure initialized
+            if (!this.isInitialized) {
+                console.log('Piper not initialized, initializing now...');
+                await this.init();
             }
+
+            console.log('🔽 Download requested for model:', modelId);
+            console.log('Piper library loaded:', !!piperLib);
+            console.log('Piper library type:', typeof piperLib);
+            console.log('Piper library has download:', piperLib && typeof piperLib.download);
+
+            if (!piperLib) {
+                const errorMsg = 'Piper TTS library not loaded. Check if CDN is accessible and library initialized.';
+                console.error('❌', errorMsg);
+                throw new Error(errorMsg);
+            }
+
+            if (typeof piperLib.download !== 'function') {
+                const errorMsg = 'Piper library loaded but download method not available';
+                console.error('❌', errorMsg);
+                console.log('Available methods:', Object.keys(piperLib));
+                throw new Error(errorMsg);
+            }
+
+            console.log('📥 Starting download for model:', modelId);
 
             // Use Piper library's download with progress tracking
             await piperLib.download(modelId, (progress) => {
                 // Progress object has loaded and total properties
-                const percentage = Math.round((progress.loaded * 100) / progress.total);
+                const percentage = progress.total > 0
+                    ? Math.round((progress.loaded * 100) / progress.total)
+                    : 0;
+
+                console.log(`Download progress: ${percentage}%`);
 
                 if (progressCallback) {
-                    progressCallback.invokeMethodAsync('Invoke', percentage);
+                    try {
+                        progressCallback.invokeMethodAsync('Invoke', percentage);
+                    } catch (callbackError) {
+                        console.warn('Progress callback error:', callbackError);
+                    }
                 }
             });
+
+            console.log('✅ Download completed, storing metadata');
 
             // Store metadata in our IndexedDB
             await this.storeModel(modelId, new ArrayBuffer(0)); // Metadata only - actual model is in Piper's storage
 
+            console.log('✅ Model downloaded successfully:', modelId);
             return true;
         } catch (error) {
-            console.error('Piper download error:', error);
+            console.error('❌ Piper download error:', error);
+            console.error('Error stack:', error.stack);
             return false;
         }
     },
