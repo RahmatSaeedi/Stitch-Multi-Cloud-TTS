@@ -1,0 +1,112 @@
+@inject IJSRuntime JS
+
+@if (_showInstallPrompt)
+{
+    <MudPaper Class="pa-4 mb-4" Elevation="2">
+        <MudGrid>
+            <MudItem xs="12" sm="8">
+                <MudText Typo="Typo.h6" Class="mb-2">
+                    <MudIcon Icon="@Icons.Material.Filled.GetApp" Class="mr-2" />
+                    Install Multi-Cloud TTS
+                </MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Install this app on your device for quick access and offline capabilities.
+                </MudText>
+            </MudItem>
+            <MudItem xs="12" sm="4" Class="d-flex align-center justify-end">
+                <MudButton Variant="Variant.Text"
+                           Color="Color.Secondary"
+                           OnClick="DismissPrompt"
+                           Class="mr-2">
+                    Not Now
+                </MudButton>
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Download"
+                           OnClick="InstallApp">
+                    Install
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+}
+
+@code {
+    private bool _showInstallPrompt = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                // Check if app is already installed
+                var isInstalled = await JS.InvokeAsync<bool>("eval", @"
+                    (function() {
+                        return window.matchMedia('(display-mode: standalone)').matches ||
+                               window.navigator.standalone ||
+                               document.referrer.includes('android-app://');
+                    })()
+                ");
+
+                if (!isInstalled)
+                {
+                    // Setup beforeinstallprompt event listener
+                    await JS.InvokeVoidAsync("eval", @"
+                        window.deferredPrompt = null;
+                        window.addEventListener('beforeinstallprompt', (e) => {
+                            e.preventDefault();
+                            window.deferredPrompt = e;
+                            DotNet.invokeMethodAsync('SpeechApp', 'ShowInstallPrompt');
+                        });
+                    ");
+                }
+            }
+            catch
+            {
+                // Silently fail if JS interop isn't ready
+            }
+        }
+    }
+
+    [JSInvokable("ShowInstallPrompt")]
+    public static void ShowInstallPrompt()
+    {
+        // This would need proper state management
+        // For now, simplified version
+    }
+
+    private async Task InstallApp()
+    {
+        try
+        {
+            var result = await JS.InvokeAsync<bool>("eval", @"
+                (async function() {
+                    if (window.deferredPrompt) {
+                        window.deferredPrompt.prompt();
+                        const { outcome } = await window.deferredPrompt.userChoice;
+                        window.deferredPrompt = null;
+                        return outcome === 'accepted';
+                    }
+                    return false;
+                })()
+            ");
+
+            if (result)
+            {
+                _showInstallPrompt = false;
+                StateHasChanged();
+            }
+        }
+        catch
+        {
+            // Silently fail
+        }
+    }
+
+    private void DismissPrompt()
+    {
+        _showInstallPrompt = false;
+        StateHasChanged();
+    }
+}

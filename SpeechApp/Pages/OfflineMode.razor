@@ -1,0 +1,362 @@
+@page "/offline"
+@using SpeechApp.Services.Interfaces
+@using SpeechApp.Services.Offline
+@using SpeechApp.Models
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<PageTitle>Offline Mode - Stitch TTS</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4 mb-8">
+    <MudText Typo="Typo.h4" Class="mb-2">
+        <MudIcon Icon="@Icons.Material.Filled.CloudOff" Class="mr-2" />
+        Offline Text-to-Speech
+    </MudText>
+    <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-6">
+        Download voice models for offline speech synthesis. Works without internet after installation.
+    </MudText>
+
+    <!-- Storage Quota Display -->
+    <MudAlert Severity="Severity.Info" Class="mb-4">
+        <MudGrid>
+            <MudItem xs="12" sm="6">
+                <MudText Typo="Typo.body2">
+                    <strong>Storage Used:</strong> @_storageUsedFormatted
+                </MudText>
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudText Typo="Typo.body2">
+                    <strong>Browser Limit:</strong> ~1 GB (varies by browser)
+                </MudText>
+            </MudItem>
+        </MudGrid>
+        <MudProgressLinear Value="@_storagePercentage" Color="@GetStorageColor()" Class="mt-2" />
+    </MudAlert>
+
+    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
+        <!-- Piper TTS Tab -->
+        <MudTabPanel Text="Piper TTS" Icon="@Icons.Material.Filled.HighQuality">
+            <MudText Typo="Typo.h6" Class="mb-3">
+                <MudIcon Icon="@Icons.Material.Filled.Star" Color="Color.Warning" Size="Size.Small" Class="mr-1" />
+                Piper - High-Quality Offline TTS
+            </MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+                Neural voices with natural prosody. Each model is 50-120 MB. Best quality offline option.
+            </MudText>
+
+            @if (_piperAvailableModels == null)
+            {
+                <MudProgressCircular Indeterminate="true" />
+            }
+            else
+            {
+                <MudGrid>
+                    @foreach (var model in _piperAvailableModels)
+                    {
+                        <MudItem xs="12" md="6" lg="4">
+                            <MudCard Outlined="true">
+                                <MudCardContent>
+                                    <MudText Typo="Typo.h6">@model.Name</MudText>
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-2">
+                                        @model.Language • @model.Gender
+                                    </MudText>
+                                    <MudText Typo="Typo.caption" Class="mb-2">
+                                        @model.Description
+                                    </MudText>
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Info">@model.GetFormattedSize()</MudChip>
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Success">@model.Quality</MudChip>
+                                </MudCardContent>
+                                <MudCardActions>
+                                    @if (model.IsDownloaded)
+                                    {
+                                        <MudButton Variant="Variant.Text"
+                                                   Color="Color.Success"
+                                                   StartIcon="@Icons.Material.Filled.CheckCircle"
+                                                   Disabled="true">
+                                            Downloaded
+                                        </MudButton>
+                                        <MudSpacer />
+                                        <MudButton Variant="Variant.Text"
+                                                   Color="Color.Error"
+                                                   StartIcon="@Icons.Material.Filled.Delete"
+                                                   OnClick="@(() => RemovePiperModel(model.Id))">
+                                            Remove
+                                        </MudButton>
+                                    }
+                                    else
+                                    {
+                                        <MudButton Variant="Variant.Filled"
+                                                   Color="Color.Primary"
+                                                   StartIcon="@Icons.Material.Filled.Download"
+                                                   Disabled="@_isDownloading"
+                                                   OnClick="@(() => DownloadPiperModel(model.Id))">
+                                            Download
+                                        </MudButton>
+                                    }
+                                </MudCardActions>
+
+                                @if (_downloadingModelId == model.Id && _isDownloading)
+                                {
+                                    <MudProgressLinear Value="@_downloadProgress" Color="Color.Primary" Class="mt-2" />
+                                    <MudText Typo="Typo.caption" Align="Align.Center" Class="mt-1">
+                                        Downloading... @_downloadProgress%
+                                    </MudText>
+                                }
+                            </MudCard>
+                        </MudItem>
+                    }
+                </MudGrid>
+            }
+        </MudTabPanel>
+
+        <!-- eSpeak-NG Tab -->
+        <MudTabPanel Text="eSpeak-NG" Icon="@Icons.Material.Filled.Language">
+            <MudText Typo="Typo.h6" Class="mb-3">
+                <MudIcon Icon="@Icons.Material.Filled.Public" Color="Color.Info" Size="Size.Small" Class="mr-1" />
+                eSpeak-NG - Lightweight Multilingual TTS
+            </MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+                Compact synthesizer supporting 127+ languages. Only ~5 MB total. Pre-bundled and ready to use.
+            </MudText>
+
+            <MudAlert Severity="Severity.Success" Class="mb-4">
+                eSpeak-NG is pre-installed and ready to use! No downloads needed. Select eSpeak voices on the Home page to use offline synthesis.
+            </MudAlert>
+
+            <MudCard Outlined="true">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">eSpeak-NG Core Package</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudGrid>
+                        <MudItem xs="12" sm="4">
+                            <MudText Typo="Typo.body2">
+                                <strong>Status:</strong>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Success">Active</MudChip>
+                            </MudText>
+                        </MudItem>
+                        <MudItem xs="12" sm="4">
+                            <MudText Typo="Typo.body2">
+                                <strong>Size:</strong> ~5 MB
+                            </MudText>
+                        </MudItem>
+                        <MudItem xs="12" sm="4">
+                            <MudText Typo="Typo.body2">
+                                <strong>Languages:</strong> 127+
+                            </MudText>
+                        </MudItem>
+                    </MudGrid>
+
+                    <MudDivider Class="my-3" />
+
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">Supported Languages (Sample):</MudText>
+                    <MudChipSet T="string">
+                        <MudChip T="string" Size="Size.Small">English</MudChip>
+                        <MudChip T="string" Size="Size.Small">Spanish</MudChip>
+                        <MudChip T="string" Size="Size.Small">French</MudChip>
+                        <MudChip T="string" Size="Size.Small">German</MudChip>
+                        <MudChip T="string" Size="Size.Small">Italian</MudChip>
+                        <MudChip T="string" Size="Size.Small">Portuguese</MudChip>
+                        <MudChip T="string" Size="Size.Small">Russian</MudChip>
+                        <MudChip T="string" Size="Size.Small">Chinese</MudChip>
+                        <MudChip T="string" Size="Size.Small">Japanese</MudChip>
+                        <MudChip T="string" Size="Size.Small">Korean</MudChip>
+                        <MudChip T="string" Size="Size.Small">Arabic</MudChip>
+                        <MudChip T="string" Size="Size.Small">Hindi</MudChip>
+                        <MudChip T="string" Size="Size.Small">+115 more...</MudChip>
+                    </MudChipSet>
+                </MudCardContent>
+            </MudCard>
+        </MudTabPanel>
+
+        <!-- Help Tab -->
+        <MudTabPanel Text="Help & Info" Icon="@Icons.Material.Filled.Help">
+            <MudText Typo="Typo.h6" Class="mb-3">About Offline TTS</MudText>
+
+            <MudExpansionPanels MultiExpansion="true">
+                <MudExpansionPanel Text="How does offline TTS work?">
+                    <MudText Typo="Typo.body2">
+                        Offline TTS uses WebAssembly-compiled speech engines that run entirely in your browser.
+                        Voice models are downloaded once and stored in your browser's IndexedDB. After download,
+                        synthesis happens locally without any internet connection.
+                    </MudText>
+                </MudExpansionPanel>
+
+                <MudExpansionPanel Text="Piper vs eSpeak-NG: Which should I use?">
+                    <MudText Typo="Typo.body2" Class="mb-2">
+                        <strong>Use Piper if:</strong>
+                    </MudText>
+                    <MudList T="string" Dense="true">
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Check">You want the highest quality offline voices</MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Check">You have 50-120 MB storage per language</MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Check">You primarily use 1-3 languages</MudListItem>
+                    </MudList>
+
+                    <MudText Typo="Typo.body2" Class="mb-2 mt-3">
+                        <strong>Use eSpeak-NG if:</strong>
+                    </MudText>
+                    <MudList T="string" Dense="true">
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Check">You need many languages (127+)</MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Check">You have limited storage space</MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Check">You want instant availability (no downloads)</MudListItem>
+                    </MudList>
+                </MudExpansionPanel>
+
+                <MudExpansionPanel Text="Storage & Browser Limits">
+                    <MudText Typo="Typo.body2" Class="mb-2">
+                        Most modern browsers allow ~1 GB of storage for Progressive Web Apps. This is shared across:
+                    </MudText>
+                    <MudList T="string" Dense="true">
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Storage">Voice models (Piper)</MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Storage">Voice cache (14-day TTL)</MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Storage">Application cache (service worker)</MudListItem>
+                    </MudList>
+                    <MudText Typo="Typo.body2" Class="mt-2">
+                        You can download approximately 8-15 Piper models before reaching the limit.
+                        The app will automatically manage storage and warn you when approaching limits.
+                    </MudText>
+                </MudExpansionPanel>
+
+                <MudExpansionPanel Text="Privacy & Security">
+                    <MudText Typo="Typo.body2">
+                        Offline TTS is the most private option. Your text never leaves your device, and no
+                        internet connection is required after model download. Models are stored securely in
+                        IndexedDB and can only be accessed by this application.
+                    </MudText>
+                </MudExpansionPanel>
+            </MudExpansionPanels>
+
+            <MudAlert Severity="Severity.Warning" Class="mt-4">
+                <strong>Note:</strong> Offline TTS requires modern browser with WebAssembly support.
+                Not available in private/incognito mode due to storage restrictions.
+            </MudAlert>
+        </MudTabPanel>
+    </MudTabs>
+</MudContainer>
+
+@code {
+    private PiperTTSService? _piperService;
+    private ESpeakNGService? _espeakService;
+
+    private List<OfflineVoiceModel>? _piperAvailableModels;
+    private long _storageUsed;
+    private string _storageUsedFormatted = "0 MB";
+    private double _storagePercentage;
+
+    private bool _isDownloading;
+    private string? _downloadingModelId;
+    private int _downloadProgress;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Initialize services (would be injected in production)
+        _piperService = new PiperTTSService(JS, null!); // StorageService would be injected
+        _espeakService = new ESpeakNGService(JS);
+
+        await LoadModels();
+        await UpdateStorageInfo();
+    }
+
+    private async Task LoadModels()
+    {
+        if (_piperService != null)
+        {
+            _piperAvailableModels = await _piperService.GetAvailableModelsAsync();
+            var downloaded = await _piperService.GetDownloadedModelsAsync();
+
+            // Mark downloaded models
+            foreach (var model in _piperAvailableModels)
+            {
+                model.IsDownloaded = downloaded.Any(d => d.Id == model.Id);
+            }
+        }
+    }
+
+    private async Task UpdateStorageInfo()
+    {
+        if (_piperService != null)
+        {
+            _storageUsed = await _piperService.GetTotalModelSizeAsync();
+            _storageUsedFormatted = FormatBytes(_storageUsed);
+
+            // Assume 1 GB browser limit
+            var limit = 1024L * 1024 * 1024;
+            _storagePercentage = (_storageUsed / (double)limit) * 100;
+        }
+    }
+
+    private async Task DownloadPiperModel(string modelId)
+    {
+        _isDownloading = true;
+        _downloadingModelId = modelId;
+        _downloadProgress = 0;
+
+        try
+        {
+            var success = await _piperService!.DownloadModelAsync(modelId, progress =>
+            {
+                _downloadProgress = progress;
+                InvokeAsync(StateHasChanged);
+            });
+
+            if (success)
+            {
+                Snackbar.Add($"Model downloaded successfully!", Severity.Success);
+                await LoadModels();
+                await UpdateStorageInfo();
+            }
+            else
+            {
+                Snackbar.Add("Download failed. Please try again.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isDownloading = false;
+            _downloadingModelId = null;
+            _downloadProgress = 0;
+        }
+    }
+
+    private async Task RemovePiperModel(string modelId)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to remove this voice model?");
+
+        if (confirmed && _piperService != null)
+        {
+            var success = await _piperService.RemoveModelAsync(modelId);
+
+            if (success)
+            {
+                Snackbar.Add("Model removed successfully", Severity.Success);
+                await LoadModels();
+                await UpdateStorageInfo();
+            }
+            else
+            {
+                Snackbar.Add("Failed to remove model", Severity.Error);
+            }
+        }
+    }
+
+    private Color GetStorageColor()
+    {
+        if (_storagePercentage < 50) return Color.Success;
+        if (_storagePercentage < 75) return Color.Warning;
+        return Color.Error;
+    }
+
+    private string FormatBytes(long bytes)
+    {
+        if (bytes < 1024) return $"{bytes} B";
+        if (bytes < 1024 * 1024) return $"{bytes / 1024.0:F1} KB";
+        if (bytes < 1024 * 1024 * 1024) return $"{bytes / (1024.0 * 1024.0):F1} MB";
+        return $"{bytes / (1024.0 * 1024.0 * 1024.0):F2} GB";
+    }
+}

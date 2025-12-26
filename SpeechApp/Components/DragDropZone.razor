@@ -1,0 +1,114 @@
+@using Microsoft.AspNetCore.Components.Forms
+
+<div class="drag-drop-zone @(_isDragging ? "dragging" : "")"
+     @ondrop="HandleDrop"
+     @ondragenter="HandleDragEnter"
+     @ondragleave="HandleDragLeave"
+     @ondragover:preventDefault="true">
+
+    <MudPaper Class="pa-8 text-center" Elevation="0" Style="background: transparent;">
+        <MudIcon Icon="@Icons.Material.Filled.CloudUpload" Size="Size.Large" Class="mb-4" Style="font-size: 4rem;" />
+
+        <MudText Typo="Typo.h6" Class="mb-2">
+            @if (_isDragging)
+            {
+                <text>Drop file here</text>
+            }
+            else
+            {
+                <text>Drag and drop file here</text>
+            }
+        </MudText>
+
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+            or
+        </MudText>
+
+        <InputFile id="fileInput" OnChange="HandleFileSelected" accept="@AcceptedFileTypes" hidden multiple="false" />
+        <MudButton HtmlTag="label"
+                   Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.UploadFile"
+                   for="fileInput">
+            Choose File
+        </MudButton>
+
+        @if (!string.IsNullOrEmpty(AcceptedFileTypes))
+        {
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-4">
+                Accepted: @AcceptedFileTypes
+            </MudText>
+        }
+
+        @if (MaxFileSizeMB > 0)
+        {
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                Max size: @MaxFileSizeMB MB
+            </MudText>
+        }
+    </MudPaper>
+</div>
+
+@code {
+    [Parameter]
+    public EventCallback<IBrowserFile> OnFileSelected { get; set; }
+
+    [Parameter]
+    public string AcceptedFileTypes { get; set; } = ".pdf,.txt,.md";
+
+    [Parameter]
+    public int MaxFileSizeMB { get; set; } = 100;
+
+    private bool _isDragging = false;
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        if (e.File != null)
+        {
+            await OnFileSelected.InvokeAsync(e.File);
+        }
+    }
+
+    private void HandleDragEnter()
+    {
+        _isDragging = true;
+    }
+
+    private void HandleDragLeave()
+    {
+        _isDragging = false;
+    }
+
+    private async Task HandleDrop(DragEventArgs e)
+    {
+        _isDragging = false;
+
+        // Note: Getting files from drag event is complex in Blazor
+        // For now, rely on the InputFile component
+        // A more advanced implementation would use JS interop
+    }
+}
+
+<style>
+    .drag-drop-zone {
+        border: 2px dashed var(--mud-palette-primary);
+        border-radius: 8px;
+        padding: 2rem;
+        min-height: 300px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        background: var(--mud-palette-surface);
+    }
+
+    .drag-drop-zone.dragging {
+        border-color: var(--mud-palette-success);
+        background: var(--mud-palette-success-lighten);
+        transform: scale(1.02);
+    }
+
+    .drag-drop-zone:hover {
+        border-color: var(--mud-palette-primary-darken);
+    }
+</style>

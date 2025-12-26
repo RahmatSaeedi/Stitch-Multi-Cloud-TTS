@@ -1,0 +1,150 @@
+@using SpeechApp.Services.Interfaces
+
+<MudCard>
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">
+                <MudIcon Icon="@Icons.Material.Filled.Description" Class="mr-2" />
+                @Title
+            </MudText>
+        </CardHeaderContent>
+        <CardHeaderActions>
+            @if (Metadata != null)
+            {
+                <MudChip T="string" Size="Size.Small" Color="Color.Info">
+                    @Metadata.PageCount @(Metadata.PageCount == 1 ? "page" : "pages")
+                </MudChip>
+                @if (!string.IsNullOrEmpty(Metadata.Author))
+                {
+                    <MudChip T="string" Size="Size.Small">@Metadata.Author</MudChip>
+                }
+            }
+        </CardHeaderActions>
+    </MudCardHeader>
+
+    <MudCardContent>
+        @if (IsScanned)
+        {
+            <MudAlert Severity="Severity.Warning" Class="mb-4">
+                <MudText>This appears to be a scanned PDF. Text extraction may be incomplete.</MudText>
+                @if (ShowOcrOption)
+                {
+                    <MudText Typo="Typo.caption">Enable OCR for better text extraction.</MudText>
+                }
+            </MudAlert>
+        }
+
+        @if (Chapters != null && Chapters.Any())
+        {
+            <MudExpansionPanels Class="mb-4">
+                <MudExpansionPanel Text="@($"Chapters ({Chapters.Count})")">
+                    <MudList T="string" Dense="true">
+                        @foreach (var chapter in Chapters)
+                        {
+                            <MudListItem T="string">
+                                <MudText Typo="Typo.body2">
+                                    <strong>@chapter.Number.</strong> @chapter.Title
+                                </MudText>
+                                @if (!string.IsNullOrEmpty(chapter.Preview))
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        @chapter.Preview
+                                    </MudText>
+                                }
+                            </MudListItem>
+                        }
+                    </MudList>
+                </MudExpansionPanel>
+            </MudExpansionPanels>
+        }
+
+        @if (AllowEdit)
+        {
+            <MudTextField @bind-Value="EditableText"
+                          Label="Extracted Text"
+                          Variant="Variant.Outlined"
+                          Lines="15"
+                          Immediate="true"
+                          HelperText="@($"{CharacterCount:N0} characters")" />
+        }
+        else
+        {
+            <MudPaper Class="pa-4" Style="max-height: 400px; overflow-y: auto; white-space: pre-wrap; font-family: monospace; background: var(--mud-palette-surface);">
+                @Text
+            </MudPaper>
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
+                @CharacterCount.ToString("N0") characters
+            </MudText>
+        }
+    </MudCardContent>
+
+    @if (AllowEdit)
+    {
+        <MudCardActions>
+            <MudButton Variant="Variant.Text"
+                       Color="Color.Secondary"
+                       OnClick="ResetText">
+                Reset
+            </MudButton>
+            <MudSpacer />
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       OnClick="HandleTextChanged">
+                Apply Changes
+            </MudButton>
+        </MudCardActions>
+    }
+</MudCard>
+
+@code {
+    [Parameter]
+    public string? Title { get; set; }
+
+    [Parameter]
+    public string? Text { get; set; }
+
+    [Parameter]
+    public FileMetadata? Metadata { get; set; }
+
+    [Parameter]
+    public List<Chapter>? Chapters { get; set; }
+
+    [Parameter]
+    public bool IsScanned { get; set; }
+
+    [Parameter]
+    public bool AllowEdit { get; set; } = true;
+
+    [Parameter]
+    public bool ShowOcrOption { get; set; } = true;
+
+    [Parameter]
+    public EventCallback<string> OnTextChanged { get; set; }
+
+    private string? EditableText { get; set; }
+    private string? OriginalText { get; set; }
+
+    private int CharacterCount => (AllowEdit ? EditableText : Text)?.Length ?? 0;
+
+    protected override void OnParametersSet()
+    {
+        if (OriginalText != Text)
+        {
+            OriginalText = Text;
+            EditableText = Text;
+        }
+    }
+
+    private void ResetText()
+    {
+        EditableText = OriginalText;
+    }
+
+    private async Task HandleTextChanged()
+    {
+        if (!string.IsNullOrEmpty(EditableText))
+        {
+            await OnTextChanged.InvokeAsync(EditableText);
+        }
+    }
+}

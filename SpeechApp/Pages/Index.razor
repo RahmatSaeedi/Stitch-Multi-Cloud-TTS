@@ -1,0 +1,811 @@
+@page "/"
+@inject IEncryptionService EncryptionService
+@inject IStorageService StorageService
+@inject ITTSProviderManager ProviderManager
+@inject ITextChunkingService ChunkingService
+@inject IAudioService AudioService
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+
+<PageTitle>Stitch Multi-Cloud TTS - Home</PageTitle>
+
+<MudText Typo="Typo.h3" GutterBottom="true">Text-to-Speech Synthesis</MudText>
+<MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">
+    Convert text to natural-sounding speech using multiple cloud TTS providers
+</MudText>
+
+@if (!_isEncryptionInitialized)
+{
+    <MudPaper Class="pa-4 mb-4" Elevation="2">
+        @if (_isFirstTimeSetup)
+        {
+            <MudText Typo="Typo.h6" Class="mb-3">First-Time Setup</MudText>
+            <MudText Class="mb-4">Create a master password to securely encrypt your API keys:</MudText>
+
+            <MudTextField @bind-Value="_masterPassword"
+                          Label="Master Password"
+                          Variant="Variant.Outlined"
+                          InputType="InputType.Password"
+                          HelperText="Minimum 8 characters"
+                          Class="mb-3"
+                          OnKeyDown="@HandlePasswordKeyDown" />
+
+            <MudTextField @bind-Value="_confirmPassword"
+                          Label="Confirm Password"
+                          Variant="Variant.Outlined"
+                          InputType="InputType.Password"
+                          Class="mb-3"
+                          OnKeyDown="@HandlePasswordKeyDown" />
+
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       OnClick="InitializeEncryption"
+                       Disabled="_isInitializing">
+                @if (_isInitializing)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                }
+                Set Master Password
+            </MudButton>
+        }
+        else
+        {
+            <MudText Typo="Typo.h6" Class="mb-3">Enter Master Password</MudText>
+            <MudText Class="mb-4">Enter your master password to access the application:</MudText>
+
+            <MudTextField @bind-Value="_masterPassword"
+                          Label="Master Password"
+                          Variant="Variant.Outlined"
+                          InputType="InputType.Password"
+                          Error="_passwordError"
+                          ErrorText="@_passwordErrorMessage"
+                          Class="mb-3"
+                          OnKeyDown="@HandlePasswordKeyDown" />
+
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       OnClick="InitializeEncryption"
+                       Disabled="_isInitializing">
+                @if (_isInitializing)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                }
+                Unlock
+            </MudButton>
+        }
+    </MudPaper>
+}
+else if (_availableProviders.Count == 0 || !_hasAnyApiKey)
+{
+    <MudAlert Severity="Severity.Info" Class="mb-4">
+        Please add at least one TTS provider API key to start using the app.
+    </MudAlert>
+
+    <MudButton Variant="Variant.Filled"
+               Color="Color.Primary"
+               StartIcon="@Icons.Material.Filled.Key"
+               Href="/api-keys">
+        Manage API Keys
+    </MudButton>
+}
+else
+{
+    <MudGrid>
+        <MudItem xs="12">
+            <MudPaper Class="pa-4" Elevation="2">
+                <MudSelect Value="_selectedProviderId"
+                           Label="TTS Provider"
+                           Variant="Variant.Outlined"
+                           Class="mb-3"
+                           T="string"
+                           ValueChanged="OnProviderChanged">
+                    @foreach (var provider in _availableProviders)
+                    {
+                        <MudSelectItem Value="@provider.Id">
+                            @provider.DisplayName
+                        </MudSelectItem>
+                    }
+                </MudSelect>
+
+                <MudTextField @bind-Value="_inputText"
+                              Label="Text to Synthesize"
+                              Variant="Variant.Outlined"
+                              Lines="5"
+                              Counter="@_maxCharacterLimit"
+                              HelperText="@GetHelperText()"
+                              Class="mb-3" />
+
+                @if (_voices.Any())
+                {
+                    <MudText Typo="Typo.h6" Class="mb-3">Voice Filters</MudText>
+                    <MudGrid Class="mb-3">
+                        <MudItem xs="12" sm="4">
+                            <MudSelect Value="_filterLanguage"
+                                       Label="Language"
+                                       Variant="Variant.Outlined"
+                                       Clearable="true"
+                                       Placeholder="All Languages"
+                                       T="string"
+                                       ValueChanged="OnLanguageFilterChanged">
+                                @foreach (var lang in GetAvailableLanguages())
+                                {
+                                    <MudSelectItem Value="@lang">@lang</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" sm="4">
+                            <MudSelect Value="_filterGender"
+                                       Label="Gender"
+                                       Variant="Variant.Outlined"
+                                       Clearable="true"
+                                       Placeholder="All Genders"
+                                       T="string"
+                                       ValueChanged="OnGenderFilterChanged">
+                                @foreach (var gender in GetAvailableGenders())
+                                {
+                                    <MudSelectItem Value="@gender">@gender</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" sm="4">
+                            <MudSelect Value="_filterQuality"
+                                       Label="Quality/Type"
+                                       Variant="Variant.Outlined"
+                                       Clearable="true"
+                                       Placeholder="All Types"
+                                       T="string"
+                                       ValueChanged="OnQualityFilterChanged">
+                                @foreach (var quality in GetAvailableQualities())
+                                {
+                                    <MudSelectItem Value="@quality">@quality</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                    </MudGrid>
+
+                    <div class="d-flex align-center mb-3">
+                        <MudSelect @bind-Value="_selectedVoiceId"
+                                   Label="Select Voice"
+                                   Variant="Variant.Outlined"
+                                   T="string"
+                                   Style="flex: 1;">
+                            @foreach (var voice in GetFilteredVoices())
+                            {
+                                <MudSelectItem Value="@voice.Id">
+                                    @voice.Name (@voice.Language) - @voice.Quality
+                                </MudSelectItem>
+                            }
+                        </MudSelect>
+                        <MudTooltip Text="Refresh voice list">
+                            <MudIconButton Icon="@Icons.Material.Filled.Refresh"
+                                           Color="Color.Primary"
+                                           OnClick="RefreshVoices"
+                                           Disabled="_isLoadingVoices"
+                                           Class="ml-2" />
+                        </MudTooltip>
+                    </div>
+
+                    <div class="d-flex justify-space-between align-center mb-3">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            Showing @GetFilteredVoices().Count of @_voices.Count voice(s)
+                        </MudText>
+                        @if (!string.IsNullOrEmpty(_filterLanguage) || !string.IsNullOrEmpty(_filterGender) || !string.IsNullOrEmpty(_filterQuality))
+                        {
+                            <MudButton Variant="Variant.Text"
+                                       Color="Color.Secondary"
+                                       Size="Size.Small"
+                                       OnClick="ClearFilters"
+                                       StartIcon="@Icons.Material.Filled.FilterAltOff">
+                                Clear Filters
+                            </MudButton>
+                        }
+                    </div>
+                }
+                else if (_isLoadingVoices)
+                {
+                    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-3" />
+                    <MudText Typo="Typo.caption" Class="mb-3">Loading voices...</MudText>
+                }
+
+                <MudExpansionPanels Class="mb-3">
+                    <MudExpansionPanel Text="Advanced Options">
+                        <MudGrid>
+                            <MudItem xs="12" sm="4">
+                                <MudSlider @bind-Value="_speed"
+                                           Min="0.5"
+                                           Max="2.0"
+                                           Step="0.1"
+                                           Color="Color.Primary">
+                                    Speed: @_speed.ToString("F1")x
+                                </MudSlider>
+                            </MudItem>
+                            <MudItem xs="12" sm="4">
+                                <MudSlider @bind-Value="_pitch"
+                                           Min="-20.0"
+                                           Max="20.0"
+                                           Step="1.0"
+                                           Color="Color.Primary">
+                                    Pitch: @_pitch.ToString("F0")
+                                </MudSlider>
+                            </MudItem>
+                            <MudItem xs="12" sm="4">
+                                <MudSlider @bind-Value="_volume"
+                                           Min="0.0"
+                                           Max="2.0"
+                                           Step="0.1"
+                                           Color="Color.Primary">
+                                    Volume: @_volume.ToString("F1")x
+                                </MudSlider>
+                            </MudItem>
+                        </MudGrid>
+                    </MudExpansionPanel>
+                </MudExpansionPanels>
+
+                @if (!string.IsNullOrEmpty(_inputText) && !string.IsNullOrEmpty(_selectedVoiceId))
+                {
+                    <MudText Typo="Typo.caption" Class="mb-2">
+                        Estimated cost: $@_estimatedCost.ToString("F6")
+                        @if (_estimatedChunks > 1)
+                        {
+                            <span> (@_estimatedChunks chunks)</span>
+                        }
+                    </MudText>
+                }
+
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           Size="Size.Large"
+                           FullWidth="true"
+                           OnClick="SynthesizeSpeech"
+                           Disabled="_isSynthesizing || string.IsNullOrWhiteSpace(_inputText) || string.IsNullOrEmpty(_selectedVoiceId)">
+                    @if (_isSynthesizing)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                        <span>@_synthesisProgress</span>
+                    }
+                    else
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.VolumeUp" Class="mr-2" />
+                        <span>Synthesize Speech</span>
+                    }
+                </MudButton>
+            </MudPaper>
+        </MudItem>
+
+        @if (_audioData != null)
+        {
+            <MudItem xs="12">
+                <MudPaper Class="pa-4" Elevation="2">
+                    <MudText Typo="Typo.h6" Class="mb-3">Audio Player</MudText>
+
+                    <audio controls class="mb-3" style="width: 100%;">
+                        <source src="@_audioDataUrl" type="@_audioMimeType" />
+                        Your browser does not support the audio element.
+                    </audio>
+
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Primary"
+                               OnClick="DownloadAudio"
+                               StartIcon="@Icons.Material.Filled.Download">
+                        Download Audio
+                    </MudButton>
+
+                    <MudText Typo="Typo.caption" Class="mt-2">
+                        Duration: @_synthesisDuration.TotalSeconds.ToString("F1")s |
+                        Cost: $@_actualCost.ToString("F6")
+                    </MudText>
+                </MudPaper>
+            </MudItem>
+        }
+    </MudGrid>
+}
+
+@code {
+    private bool _isEncryptionInitialized = false;
+    private bool _isInitializing = false;
+    private bool _isSynthesizing = false;
+    private bool _isLoadingVoices = false;
+    private bool _hasAnyApiKey = false;
+    private bool _isFirstTimeSetup = true;
+    private bool _passwordError = false;
+    private string _passwordErrorMessage = string.Empty;
+    private string _masterPassword = string.Empty;
+    private string _confirmPassword = string.Empty;
+
+    private List<ProviderInfo> _availableProviders = new();
+    private string _selectedProviderId = "google";
+    private List<Voice> _voices = new();
+    private string _inputText = "Hello! Welcome to Stitch Multi-Cloud Text-to-Speech. This application supports Google Cloud, ElevenLabs, and Deepgram TTS providers.";
+    private string _selectedVoiceId = string.Empty;
+    private double _speed = 1.0;
+    private double _pitch = 0.0;
+    private double _volume = 1.0;
+    private int _maxCharacterLimit = 5000;
+    private int _estimatedChunks = 1;
+    private decimal _estimatedCost = 0m;
+    private decimal _actualCost = 0m;
+    private TimeSpan _synthesisDuration = TimeSpan.Zero;
+
+    // Voice filters
+    private string _filterLanguage = string.Empty;
+    private string _filterGender = string.Empty;
+    private string _filterQuality = string.Empty;
+
+    private byte[]? _audioData;
+    private string? _audioDataUrl;
+    private string _audioMimeType = "audio/mpeg";
+    private string _synthesisProgress = "Synthesizing...";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _isEncryptionInitialized = EncryptionService.IsInitialized;
+
+        if (_isEncryptionInitialized)
+        {
+            await LoadProviders();
+        }
+        else
+        {
+            // Check if this is first-time setup or returning user
+            var salt = await LocalStorage.GetItemAsStringAsync("encryption_salt");
+            _isFirstTimeSetup = string.IsNullOrEmpty(salt);
+        }
+    }
+
+    private async Task HandlePasswordKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !_isInitializing)
+        {
+            await InitializeEncryption();
+        }
+    }
+
+    private async Task InitializeEncryption()
+    {
+        // Clear previous errors
+        _passwordError = false;
+        _passwordErrorMessage = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(_masterPassword))
+        {
+            _passwordError = true;
+            _passwordErrorMessage = "Please enter a password";
+            return;
+        }
+
+        if (_isFirstTimeSetup)
+        {
+            // First-time setup validation
+            if (_masterPassword != _confirmPassword)
+            {
+                _passwordError = true;
+                _passwordErrorMessage = "Passwords do not match";
+                return;
+            }
+
+            if (_masterPassword.Length < 8)
+            {
+                _passwordError = true;
+                _passwordErrorMessage = "Password must be at least 8 characters long";
+                return;
+            }
+        }
+
+        _isInitializing = true;
+
+        try
+        {
+            await EncryptionService.InitializeAsync(_masterPassword);
+            _isEncryptionInitialized = true;
+
+            if (_isFirstTimeSetup)
+            {
+                Snackbar.Add("Master password set successfully!", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("Welcome back!", Severity.Success);
+            }
+
+            _masterPassword = string.Empty;
+            _confirmPassword = string.Empty;
+
+            await LoadProviders();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // Invalid password for login
+            _passwordError = true;
+            _passwordErrorMessage = "Invalid password. Please try again.";
+            _masterPassword = string.Empty;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+            _masterPassword = string.Empty;
+            _confirmPassword = string.Empty;
+        }
+        finally
+        {
+            _isInitializing = false;
+        }
+    }
+
+    private async Task LoadProviders()
+    {
+        _availableProviders = ProviderManager.GetAllProviders();
+
+        // Check which providers have API keys or are offline providers (don't need API keys)
+        foreach (var provider in _availableProviders)
+        {
+            // Offline providers don't require API keys
+            if (!provider.RequiresApiKey)
+            {
+                _hasAnyApiKey = true;
+                continue;
+            }
+
+            // Cloud providers require API keys
+            var apiKey = await StorageService.GetApiKeyAsync(provider.Id);
+            if (!string.IsNullOrEmpty(apiKey))
+            {
+                _hasAnyApiKey = true;
+                var providerInstance = ProviderManager.GetProvider(provider.Id);
+                providerInstance?.SetApiKey(apiKey);
+            }
+        }
+
+        if (_hasAnyApiKey)
+        {
+            // Check for pending text from file upload
+            var pendingText = await StorageService.GetPreferenceAsync<string>("pending_text");
+            var pendingProvider = await StorageService.GetPreferenceAsync<string>("pending_provider");
+            var pendingVoice = await StorageService.GetPreferenceAsync<string>("pending_voice");
+
+            if (!string.IsNullOrEmpty(pendingText))
+            {
+                // Load the pending text into the input
+                _inputText = pendingText;
+
+                // Set provider and voice if they were specified
+                if (!string.IsNullOrEmpty(pendingProvider))
+                {
+                    _selectedProviderId = pendingProvider;
+                    await LoadVoicesForProvider(_selectedProviderId);
+
+                    if (!string.IsNullOrEmpty(pendingVoice))
+                    {
+                        _selectedVoiceId = pendingVoice;
+                    }
+                }
+
+                // Clear the pending data
+                await StorageService.SetPreferenceAsync<string?>("pending_text", null);
+                await StorageService.SetPreferenceAsync<string?>("pending_provider", null);
+                await StorageService.SetPreferenceAsync<string?>("pending_voice", null);
+
+                // Show notification
+                Snackbar.Add($"Loaded {_inputText.Length:N0} characters from uploaded file", Severity.Success);
+            }
+            else
+            {
+                // No pending text, set default provider
+                var defaultProvider = _availableProviders.FirstOrDefault(p => !p.RequiresApiKey)
+                                      ?? _availableProviders.FirstOrDefault();
+                if (defaultProvider != null)
+                {
+                    _selectedProviderId = defaultProvider.Id;
+                    await LoadVoicesForProvider(_selectedProviderId);
+                }
+            }
+        }
+    }
+
+    private async Task OnProviderChanged(string providerId)
+    {
+        _selectedProviderId = providerId;
+        ClearFilters(); // Reset filters when changing providers
+        await LoadVoicesForProvider(providerId);
+        UpdateEstimates();
+    }
+
+    private async Task LoadVoicesForProvider(string providerId, bool bypassCache = false)
+    {
+        _isLoadingVoices = true;
+        _voices.Clear();
+        _selectedVoiceId = string.Empty;
+
+        try
+        {
+            var provider = ProviderManager.GetProvider(providerId);
+            if (provider != null)
+            {
+                _maxCharacterLimit = provider.GetMaxCharacterLimit();
+                var providerInfo = provider.GetProviderInfo();
+                _voices = await provider.GetVoicesAsync(bypassCache);
+
+                if (_voices.Any())
+                {
+                    _selectedVoiceId = _voices.First().Id;
+                }
+                else
+                {
+                    // Check if this is an offline provider with no downloaded models
+                    if (!providerInfo.RequiresApiKey)
+                    {
+                        Snackbar.Add($"No {providerInfo.Name} voices downloaded. Visit the Offline Mode page to download voice models.", Severity.Info, config =>
+                        {
+                            config.Action = "Go to Offline Mode";
+                            config.ActionColor = MudBlazor.Color.Primary;
+                            config.OnClick = _ =>
+                            {
+                                Navigation.NavigateTo("/offline");
+                                return Task.CompletedTask;
+                            };
+                        });
+                    }
+                }
+
+                UpdateEstimates();
+                StateHasChanged(); // Force UI update
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading voices: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoadingVoices = false;
+        }
+    }
+
+    private async Task RefreshVoices()
+    {
+        await LoadVoicesForProvider(_selectedProviderId, bypassCache: true);
+        Snackbar.Add("Voice list refreshed", Severity.Success);
+    }
+
+    private void UpdateEstimates()
+    {
+        if (string.IsNullOrWhiteSpace(_inputText))
+        {
+            _estimatedChunks = 0;
+            _estimatedCost = 0m;
+            return;
+        }
+
+        var provider = ProviderManager.GetProvider(_selectedProviderId);
+        if (provider != null)
+        {
+            _estimatedChunks = ChunkingService.EstimateChunkCount(_inputText, provider.GetMaxCharacterLimit());
+            _estimatedCost = provider.CalculateCost(_inputText.Length);
+        }
+    }
+
+    private async Task SynthesizeSpeech()
+    {
+        _isSynthesizing = true;
+        _synthesisProgress = "Preparing...";
+
+        // Clear previous audio to ensure UI updates
+        _audioData = null;
+        _audioDataUrl = null;
+
+        try
+        {
+            var provider = ProviderManager.GetProvider(_selectedProviderId);
+            if (provider == null)
+            {
+                Snackbar.Add("Provider not found", Severity.Error);
+                return;
+            }
+
+            var config = new VoiceConfig
+            {
+                VoiceId = _selectedVoiceId,
+                ProviderId = _selectedProviderId,
+                Speed = _speed,
+                Pitch = _pitch,
+                Volume = _volume,
+                OutputFormat = "mp3"
+            };
+
+            // Check if text needs to be chunked
+            var chunks = ChunkingService.ChunkText(_inputText, provider.GetMaxCharacterLimit());
+
+            if (chunks.Count == 1)
+            {
+                // Single synthesis
+                _synthesisProgress = "Synthesizing...";
+                var result = await provider.SynthesizeSpeechAsync(_inputText, config);
+
+                if (result.Success && result.AudioData != null)
+                {
+                    _audioData = result.AudioData;
+                    _audioDataUrl = $"data:audio/mpeg;base64,{Convert.ToBase64String(_audioData)}";
+                    _actualCost = result.Cost;
+                    _synthesisDuration = result.Duration;
+
+                    Snackbar.Add($"Speech synthesized successfully!", Severity.Success);
+                }
+                else
+                {
+                    Snackbar.Add($"Synthesis failed: {result.ErrorMessage}", Severity.Error);
+                }
+            }
+            else
+            {
+                // Multiple chunks - synthesize and merge
+                var audioChunks = new List<byte[]>();
+                decimal totalCost = 0m;
+                var startTime = DateTime.UtcNow;
+
+                for (int i = 0; i < chunks.Count; i++)
+                {
+                    _synthesisProgress = $"Synthesizing chunk {i + 1}/{chunks.Count}...";
+                    StateHasChanged();
+
+                    var result = await provider.SynthesizeSpeechAsync(chunks[i], config);
+
+                    if (result.Success && result.AudioData != null)
+                    {
+                        audioChunks.Add(result.AudioData);
+                        totalCost += result.Cost;
+                    }
+                    else
+                    {
+                        Snackbar.Add($"Chunk {i + 1} failed: {result.ErrorMessage}", Severity.Error);
+                        _isSynthesizing = false;
+                        return;
+                    }
+                }
+
+                // Merge audio chunks
+                _synthesisProgress = "Merging audio...";
+                StateHasChanged();
+
+                _audioData = await AudioService.MergeAudioChunksAsync(audioChunks);
+                _audioDataUrl = $"data:audio/wav;base64,{Convert.ToBase64String(_audioData)}";
+                _audioMimeType = "audio/wav";
+                _actualCost = totalCost;
+                _synthesisDuration = DateTime.UtcNow - startTime;
+
+                Snackbar.Add($"Speech synthesized and merged successfully! ({chunks.Count} chunks)", Severity.Success);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isSynthesizing = false;
+        }
+    }
+
+    private async Task DownloadAudio()
+    {
+        if (_audioData != null && AudioService is AudioMergingService audioService)
+        {
+            var filename = $"tts-{DateTime.Now:yyyyMMdd-HHmmss}.{(_audioMimeType.Contains("wav") ? "wav" : "mp3")}";
+            await audioService.DownloadAudioAsync(_audioData, filename, _audioMimeType);
+        }
+    }
+
+    private string GetHelperText()
+    {
+        UpdateEstimates();
+        return $"{_inputText.Length} / {_maxCharacterLimit} characters";
+    }
+
+    private List<Voice> GetFilteredVoices()
+    {
+        var filtered = _voices.AsEnumerable();
+
+        if (!string.IsNullOrEmpty(_filterLanguage))
+        {
+            filtered = filtered.Where(v => v.Language == _filterLanguage);
+        }
+
+        if (!string.IsNullOrEmpty(_filterGender))
+        {
+            filtered = filtered.Where(v => v.Gender == _filterGender);
+        }
+
+        if (!string.IsNullOrEmpty(_filterQuality))
+        {
+            filtered = filtered.Where(v => v.Quality == _filterQuality);
+        }
+
+        return filtered.ToList();
+    }
+
+    private List<string> GetAvailableLanguages()
+    {
+        return _voices
+            .Select(v => v.Language)
+            .Where(l => !string.IsNullOrEmpty(l))
+            .Distinct()
+            .OrderBy(l => l)
+            .ToList();
+    }
+
+    private List<string> GetAvailableGenders()
+    {
+        return _voices
+            .Select(v => v.Gender ?? "Unknown")
+            .Where(g => !string.IsNullOrEmpty(g))
+            .Distinct()
+            .OrderBy(g => g)
+            .ToList();
+    }
+
+    private List<string> GetAvailableQualities()
+    {
+        return _voices
+            .Select(v => v.Quality ?? "Unknown")
+            .Where(q => !string.IsNullOrEmpty(q))
+            .Distinct()
+            .OrderBy(q => q)
+            .ToList();
+    }
+
+    private void ClearFilters()
+    {
+        _filterLanguage = string.Empty;
+        _filterGender = string.Empty;
+        _filterQuality = string.Empty;
+        UpdateSelectedVoiceAfterFilter();
+    }
+
+    private void OnLanguageFilterChanged(string value)
+    {
+        _filterLanguage = value;
+        UpdateSelectedVoiceAfterFilter();
+    }
+
+    private void OnGenderFilterChanged(string value)
+    {
+        _filterGender = value;
+        UpdateSelectedVoiceAfterFilter();
+    }
+
+    private void OnQualityFilterChanged(string value)
+    {
+        _filterQuality = value;
+        UpdateSelectedVoiceAfterFilter();
+    }
+
+    private void UpdateSelectedVoiceAfterFilter()
+    {
+        var filteredVoices = GetFilteredVoices();
+
+        if (filteredVoices.Count == 0)
+        {
+            _selectedVoiceId = string.Empty;
+            UpdateEstimates();
+            return;
+        }
+
+        // Check if currently selected voice is still in the filtered list
+        if (!string.IsNullOrEmpty(_selectedVoiceId))
+        {
+            var isSelectedVoiceInFilteredList = filteredVoices.Any(v => v.Id == _selectedVoiceId);
+
+            if (!isSelectedVoiceInFilteredList)
+            {
+                // Current selection is not in filtered list, select first filtered voice
+                _selectedVoiceId = filteredVoices.First().Id;
+            }
+        }
+        else
+        {
+            // No voice selected, select first filtered voice
+            _selectedVoiceId = filteredVoices.First().Id;
+        }
+
+        UpdateEstimates();
+    }
+}

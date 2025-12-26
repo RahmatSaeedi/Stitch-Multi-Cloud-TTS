@@ -1,0 +1,56 @@
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+@if (!_isOnline)
+{
+    <MudAlert Severity="Severity.Warning" Class="fixed-bottom mb-0" Style="z-index: 9999;">
+        <MudText Typo="Typo.body2">
+            <MudIcon Icon="@Icons.Material.Filled.CloudOff" Class="mr-2" />
+            You are currently offline. Some features may not be available.
+        </MudText>
+    </MudAlert>
+}
+
+@code {
+    private bool _isOnline = true;
+    private DotNetObjectReference<OfflineIndicator>? _objRef;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _objRef = DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("eval", @"
+                window.addEventListener('online', () => {
+                    DotNet.invokeMethodAsync('SpeechApp', 'OnlineStatusChanged', true);
+                });
+                window.addEventListener('offline', () => {
+                    DotNet.invokeMethodAsync('SpeechApp', 'OnlineStatusChanged', false);
+                });
+                // Set initial status
+                if (!navigator.onLine) {
+                    DotNet.invokeMethodAsync('SpeechApp', 'OnlineStatusChanged', false);
+                }
+            ");
+        }
+    }
+
+    [JSInvokable("OnlineStatusChanged")]
+    public static void OnlineStatusChanged(bool isOnline)
+    {
+        // This would need a more sophisticated approach with state management
+        // For now, this is a simplified version
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_objRef != null)
+        {
+            await JS.InvokeVoidAsync("eval", @"
+                window.removeEventListener('online', arguments[0]);
+                window.removeEventListener('offline', arguments[0]);
+            ");
+            _objRef.Dispose();
+        }
+    }
+}

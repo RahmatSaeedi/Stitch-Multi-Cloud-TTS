@@ -1,0 +1,240 @@
+@page "/usage"
+@using SpeechApp.Services.Interfaces
+@inject IUsageHistoryService UsageHistory
+@inject ISnackbar Snackbar
+
+<PageTitle>Usage & Statistics - Multi-Cloud TTS</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4 mb-8">
+    <MudText Typo="Typo.h4" Class="mb-2">
+        <MudIcon Icon="@Icons.Material.Filled.Analytics" Class="mr-2" />
+        Usage & Statistics
+    </MudText>
+    <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-6">
+        Track your TTS usage and costs
+    </MudText>
+
+    @if (_isLoading)
+    {
+        <MudProgressCircular Indeterminate="true" />
+    }
+    else if (_statistics != null)
+    {
+        <MudGrid>
+            <!-- Overview Cards -->
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h3" Color="Color.Primary">@_statistics.TotalSyntheses</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Total Syntheses</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h3" Color="Color.Success">@_statistics.TotalCharacters.ToString("N0")</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Characters Processed</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h3" Color="Color.Warning">$@_statistics.TotalCost.ToString("F4")</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Total Cost</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h3" Color="Color.Info">@((int)_statistics.TotalDuration.TotalSeconds)s</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Processing Time</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <!-- Success Rate -->
+            <MudItem xs="12" md="6">
+                <MudCard>
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Success Rate</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudGrid>
+                            <MudItem xs="6">
+                                <MudText Typo="Typo.h4" Color="Color.Success">@_statistics.SuccessfulSyntheses</MudText>
+                                <MudText Typo="Typo.body2">Successful</MudText>
+                            </MudItem>
+                            <MudItem xs="6">
+                                <MudText Typo="Typo.h4" Color="Color.Error">@_statistics.FailedSyntheses</MudText>
+                                <MudText Typo="Typo.body2">Failed</MudText>
+                            </MudItem>
+                        </MudGrid>
+                        @if (_statistics.TotalSyntheses > 0)
+                        {
+                            var successRate = (_statistics.SuccessfulSyntheses * 100.0 / _statistics.TotalSyntheses);
+                            <MudProgressLinear Color="Color.Success" Value="@successRate" Class="mt-3" />
+                            <MudText Typo="Typo.caption" Class="mt-2">@successRate.ToString("F1")% success rate</MudText>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <!-- Most Used -->
+            <MudItem xs="12" md="6">
+                <MudCard>
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Most Used</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudText Typo="Typo.subtitle2" Class="mb-2">Provider:</MudText>
+                        <MudChip T="string" Color="Color.Primary" Size="Size.Medium" Class="mb-3">
+                            @(_statistics.MostUsedProvider ?? "N/A")
+                        </MudChip>
+
+                        <MudText Typo="Typo.subtitle2" Class="mb-2">Voice:</MudText>
+                        <MudChip T="string" Color="Color.Secondary" Size="Size.Medium">
+                            @(_statistics.MostUsedVoice ?? "N/A")
+                        </MudChip>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <!-- Usage by Provider -->
+            <MudItem xs="12">
+                <MudCard>
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Usage by Provider</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudSimpleTable Dense="true" Striped="true">
+                            <thead>
+                                <tr>
+                                    <th>Provider</th>
+                                    <th>Syntheses</th>
+                                    <th>Characters</th>
+                                    <th>Cost</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var provider in _statistics.SynthesesByProvider.OrderByDescending(kvp => kvp.Value))
+                                {
+                                    <tr>
+                                        <td>@provider.Key</td>
+                                        <td>@provider.Value</td>
+                                        <td>@(_statistics.CharactersByProvider.GetValueOrDefault(provider.Key, 0).ToString("N0"))</td>
+                                        <td>$@(_statistics.CostByProvider.GetValueOrDefault(provider.Key, 0).ToString("F4"))</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <!-- Recent History -->
+            <MudItem xs="12">
+                <MudCard>
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Recent Activity</MudText>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudButton Variant="Variant.Text"
+                                       Color="Color.Error"
+                                       StartIcon="@Icons.Material.Filled.Delete"
+                                       OnClick="ClearHistory">
+                                Clear History
+                            </MudButton>
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        @if (_recentHistory.Any())
+                        {
+                            <MudSimpleTable Dense="true" Striped="true">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Provider</th>
+                                        <th>Voice</th>
+                                        <th>Characters</th>
+                                        <th>Cost</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var record in _recentHistory.Take(20))
+                                    {
+                                        <tr>
+                                            <td>@record.Timestamp.ToLocalTime().ToString("MMM dd, HH:mm")</td>
+                                            <td>@record.ProviderName</td>
+                                            <td>@(record.VoiceName ?? "N/A")</td>
+                                            <td>@record.CharacterCount.ToString("N0")</td>
+                                            <td>$@record.Cost.ToString("F4")</td>
+                                            <td>
+                                                @if (record.Success)
+                                                {
+                                                    <MudChip T="string" Color="Color.Success" Size="Size.Small">Success</MudChip>
+                                                }
+                                                else
+                                                {
+                                                    <MudChip T="string" Color="Color.Error" Size="Size.Small">Failed</MudChip>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </MudSimpleTable>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                No usage history yet. Start synthesizing to see your statistics!
+                            </MudText>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    }
+</MudContainer>
+
+@code {
+    private bool _isLoading = true;
+    private UsageStatistics? _statistics;
+    private List<UsageRecord> _recentHistory = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _isLoading = true;
+
+        _statistics = await UsageHistory.GetStatisticsAsync();
+        _recentHistory = await UsageHistory.GetUsageHistoryAsync();
+
+        _isLoading = false;
+    }
+
+    private async Task ClearHistory()
+    {
+        await UsageHistory.ClearHistoryAsync();
+        Snackbar.Add("Usage history cleared", Severity.Success);
+        await LoadData();
+        StateHasChanged();
+    }
+}

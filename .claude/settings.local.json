@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(dotnet:*)",
+      "WebSearch",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:cdn.jsdelivr.net)",
+      "WebFetch(domain:www.masswerk.at)",
+      "WebFetch(domain:unpkg.com)",
+      "WebFetch(domain:cdnjs.cloudflare.com)",
+      "Bash(powershell -Command \"Invoke-WebRequest -Uri ''https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'' -OutFile ''pdf.min.js''\")",
+      "Bash(powershell -Command \"Invoke-WebRequest -Uri ''https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'' -OutFile ''pdf.worker.min.js''\")"
+    ]
+  }
+}

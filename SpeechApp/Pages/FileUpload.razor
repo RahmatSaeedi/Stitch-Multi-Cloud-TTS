@@ -1,0 +1,307 @@
+@page "/upload"
+@using Microsoft.AspNetCore.Components.Forms
+@using SpeechApp.Services.Interfaces
+@using SpeechApp.Components
+@inject IFileProcessingService FileProcessor
+@inject ITTSProviderManager ProviderManager
+@inject IEncryptionService EncryptionService
+@inject IStorageService StorageService
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<PageTitle>File Upload - Multi-Cloud TTS</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4 mb-8">
+    <MudText Typo="Typo.h4" Class="mb-2">
+        <MudIcon Icon="@Icons.Material.Filled.UploadFile" Class="mr-2" />
+        File Upload
+    </MudText>
+    <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-6">
+        Upload PDF or text files to convert to speech
+    </MudText>
+
+    @if (_extractedText == null)
+    {
+        <!-- Keep DragDropZone in DOM even during processing to prevent file reference from becoming invalid -->
+        <div style="display: @(_isProcessing ? "none" : "block")">
+            <DragDropZone OnFileSelected="HandleFileSelected"
+                          AcceptedFileTypes=".pdf,.txt,.md,.log,.csv,.json,.xml,.html,.htm"
+                          MaxFileSizeMB="100" />
+        </div>
+
+        @if (_isProcessing)
+        {
+            <MudCard>
+                <MudCardContent>
+                    <MudText Typo="Typo.h6" Class="mb-4">
+                        Processing @_selectedFileName...
+                    </MudText>
+                    <MudProgressLinear Color="Color.Primary" Value="@_processingProgress" Class="mb-2" />
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        @_processingStatus
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+        }
+    }
+
+    @if (_extractedText != null && _processingResult != null)
+    {
+        <MudGrid>
+            <MudItem xs="12">
+                <FilePreview Title="@(_processingResult.Metadata?.Title ?? _selectedFileName)"
+                             Text="@_extractedText"
+                             Metadata="@_processingResult.Metadata"
+                             Chapters="@_processingResult.Chapters"
+                             IsScanned="@_processingResult.IsScanned"
+                             AllowEdit="true"
+                             OnTextChanged="HandleTextChanged" />
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudCard>
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Convert to Speech</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudGrid>
+                            <MudItem xs="12" md="6">
+                                <MudSelect T="string" Value="_selectedProviderId"
+                                           Label="TTS Provider"
+                                           Variant="Variant.Outlined"
+                                           Required="true"
+                                           ValueChanged="OnProviderChanged">
+                                    @foreach (var provider in _providers)
+                                    {
+                                        <MudSelectItem T="string" Value="@provider.Id">
+                                            @provider.DisplayName
+                                        </MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudItem>
+
+                            <MudItem xs="12" md="6">
+                                <MudSelect T="string" @bind-Value="_selectedVoiceId"
+                                           Label="Voice"
+                                           Variant="Variant.Outlined"
+                                           Disabled="@(_voices == null || !_voices.Any())"
+                                           Required="true">
+                                    @if (_voices != null)
+                                    {
+                                        @foreach (var voice in _voices)
+                                        {
+                                            <MudSelectItem T="string" Value="@voice.Id">
+                                                @voice.Name (@voice.Language)
+                                            </MudSelectItem>
+                                        }
+                                    }
+                                </MudSelect>
+                            </MudItem>
+
+                            @if (_processingResult.Chapters != null && _processingResult.Chapters.Any())
+                            {
+                                <MudItem xs="12">
+                                    <MudSwitch @bind-Value="_synthesizeByChapter"
+                                               Label="Split by chapters (create separate audio file per chapter)"
+                                               Color="Color.Primary" />
+                                </MudItem>
+                            }
+                        </MudGrid>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton Variant="Variant.Text"
+                                   Color="Color.Secondary"
+                                   OnClick="Reset">
+                            Upload Another File
+                        </MudButton>
+                        <MudSpacer />
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.RecordVoiceOver"
+                                   Disabled="@(string.IsNullOrEmpty(_selectedProviderId) || string.IsNullOrEmpty(_selectedVoiceId))"
+                                   OnClick="@(async () => await NavigateToSynthesis())">
+                            Continue to Synthesis
+                        </MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    }
+</MudContainer>
+
+@code {
+    private List<ProviderInfo> _providers = new();
+    private List<Voice>? _voices;
+    private string? _selectedProviderId;
+    private string? _selectedVoiceId;
+    private string? _selectedFileName;
+    private string? _extractedText;
+    private FileProcessingResult? _processingResult;
+    private bool _isProcessing;
+    private int _processingProgress;
+    private string _processingStatus = "Initializing...";
+    private bool _synthesizeByChapter;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _providers = ProviderManager.GetAllProviders();
+        _selectedProviderId = _providers.FirstOrDefault()?.Id;
+
+        // Only load voices if encryption is initialized (user has unlocked the app)
+        // or if the selected provider doesn't require an API key (offline TTS)
+        if (!string.IsNullOrEmpty(_selectedProviderId))
+        {
+            var provider = ProviderManager.GetProvider(_selectedProviderId);
+            if (provider != null && (!provider.GetProviderInfo().RequiresApiKey || EncryptionService.IsInitialized))
+            {
+                await LoadVoices();
+            }
+        }
+    }
+
+    private async Task HandleFileSelected(IBrowserFile file)
+    {
+        _selectedFileName = file.Name;
+
+        try
+        {
+            // Validate file FIRST
+            if (!FileProcessor.ValidateFile(file, out var errorMessage))
+            {
+                Snackbar.Add(errorMessage ?? "Invalid file", Severity.Error);
+                return;
+            }
+
+            // CRITICAL: Set _isProcessing AFTER file is selected but BEFORE any async operations
+            // This ensures the file reference stays valid
+            _isProcessing = true;
+            _processingProgress = 0;
+            _processingStatus = "Reading file...";
+
+            // Subscribe to progress events
+            FileProcessor.OnProgress += HandleProgress;
+
+            // Process file - file is read inside this method while reference is still valid
+            _processingStatus = "Processing file...";
+            _processingResult = await FileProcessor.ProcessFileAsync(file);
+
+            // Unsubscribe from progress events
+            FileProcessor.OnProgress -= HandleProgress;
+
+            if (_processingResult.Success)
+            {
+                _extractedText = _processingResult.ExtractedText;
+                _processingProgress = 100;
+                _processingStatus = "Processing complete!";
+
+                Snackbar.Add($"Successfully extracted {_extractedText?.Length ?? 0:N0} characters", Severity.Success);
+
+                if (_processingResult.IsScanned)
+                {
+                    Snackbar.Add("This appears to be a scanned PDF. Text extraction may be incomplete.", Severity.Warning);
+                }
+            }
+            else
+            {
+                Snackbar.Add(_processingResult.ErrorMessage ?? "Failed to process file", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error processing file: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isProcessing = false;
+        }
+    }
+
+    private void HandleProgress(int progress)
+    {
+        _processingProgress = progress;
+
+        if (progress < 20)
+            _processingStatus = "Reading file...";
+        else if (progress < 50)
+            _processingStatus = "Extracting text...";
+        else if (progress < 90)
+            _processingStatus = "Analyzing content...";
+        else
+            _processingStatus = "Finalizing...";
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task HandleTextChanged(string newText)
+    {
+        _extractedText = newText;
+        Snackbar.Add("Text updated", Severity.Success);
+        await Task.CompletedTask;
+    }
+
+    private async Task OnProviderChanged(string newProviderId)
+    {
+        _selectedProviderId = newProviderId;
+        await LoadVoices();
+    }
+
+    private async Task LoadVoices()
+    {
+        if (string.IsNullOrEmpty(_selectedProviderId))
+            return;
+
+        var provider = ProviderManager.GetProvider(_selectedProviderId);
+        if (provider != null)
+        {
+            var providerInfo = provider.GetProviderInfo();
+
+            // Only load voices if encryption is initialized or provider doesn't need API key
+            if (!providerInfo.RequiresApiKey || EncryptionService.IsInitialized)
+            {
+                try
+                {
+                    _voices = await provider.GetVoicesAsync();
+                    _selectedVoiceId = _voices?.FirstOrDefault()?.Id;
+                }
+                catch (InvalidOperationException)
+                {
+                    // Encryption not initialized - clear voices
+                    _voices = null;
+                    _selectedVoiceId = null;
+                }
+            }
+            else
+            {
+                // Clear voices if encryption not initialized for API-requiring provider
+                _voices = null;
+                _selectedVoiceId = null;
+            }
+        }
+    }
+
+    private void Reset()
+    {
+        _selectedFileName = null;
+        _extractedText = null;
+        _processingResult = null;
+        _isProcessing = false;
+        _processingProgress = 0;
+        _synthesizeByChapter = false;
+    }
+
+    private async Task NavigateToSynthesis()
+    {
+        if (string.IsNullOrEmpty(_extractedText))
+            return;
+
+        // Store the text and settings for the home page to use
+        await StorageService.SetPreferenceAsync("pending_text", _extractedText);
+        await StorageService.SetPreferenceAsync("pending_provider", _selectedProviderId);
+        await StorageService.SetPreferenceAsync("pending_voice", _selectedVoiceId);
+
+        // Navigate to home page
+        Navigation.NavigateTo("/");
+    }
+}

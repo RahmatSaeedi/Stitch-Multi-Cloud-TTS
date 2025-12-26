@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Icon Generator - Stitch TTS</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #7B1FA2;
+            text-align: center;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .icon-preview {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 30px 0;
+        }
+        .icon-box {
+            text-align: center;
+        }
+        .icon-box img {
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .icon-box h3 {
+            margin: 10px 0;
+            color: #333;
+        }
+        canvas {
+            display: none;
+        }
+        button {
+            background: #7B1FA2;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #6A1B9A;
+        }
+        .instructions {
+            background: #E1F5FE;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #0277BD;
+        }
+        .instructions h3 {
+            margin-top: 0;
+            color: #0277BD;
+        }
+        .social-preview {
+            margin-top: 40px;
+        }
+        .social-card {
+            background: linear-gradient(135deg, #7B1FA2 0%, #4A148C 100%);
+            padding: 60px 40px;
+            border-radius: 12px;
+            color: white;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .social-card h2 {
+            font-size: 48px;
+            margin: 20px 0;
+        }
+        .social-card p {
+            font-size: 24px;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .social-card .features {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        .feature {
+            background: rgba(255,255,255,0.1);
+            padding: 15px 25px;
+            border-radius: 25px;
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Stitch TTS Icon & Social Media Image Generator</h1>
+
+        <div class="instructions">
+            <h3>📋 Instructions:</h3>
+            <ol>
+                <li>The icons are automatically generated from the SVG file</li>
+                <li>Click the download buttons below each icon to save them</li>
+                <li>For the social media image, right-click and "Save image as..." or take a screenshot</li>
+                <li>Replace the existing icon-192.png and icon-512.png files in wwwroot/</li>
+            </ol>
+        </div>
+
+        <h2 style="text-align: center; color: #7B1FA2;">App Icons</h2>
+        <div class="icon-preview" id="iconPreview">
+            <!-- Icons will be generated here -->
+        </div>
+
+        <div class="social-preview">
+            <h2 style="text-align: center; color: #7B1FA2;">Social Media Image Preview</h2>
+            <p style="text-align: center; color: #666;">Right-click and save, or screenshot this card (1200x630px recommended for social media)</p>
+
+            <div id="socialCard" class="social-card">
+                <div style="position: relative; z-index: 1;">
+                    <div style="font-size: 18px; opacity: 0.8; margin-bottom: 10px;">
+                        ✨ PRIVACY-FIRST TTS ✨
+                    </div>
+                    <h2>Stitch Multi-Cloud<br/>Text-to-Speech</h2>
+                    <p>Transform text into natural speech with 5 cloud providers + offline TTS</p>
+
+                    <div class="features">
+                        <div class="feature">🔒 100% Private</div>
+                        <div class="feature">☁️ 5 Cloud Providers</div>
+                        <div class="feature">📱 Offline Capable</div>
+                        <div class="feature">📄 PDF Support</div>
+                    </div>
+
+                    <div style="margin-top: 30px; font-size: 18px; opacity: 0.7;">
+                        Free • Open Source • No Tracking
+                    </div>
+                </div>
+
+                <!-- Background decoration -->
+                <div style="position: absolute; top: -50px; right: -50px; width: 300px; height: 300px;
+                            background: rgba(255,255,255,0.05); border-radius: 50%;"></div>
+                <div style="position: absolute; bottom: -100px; left: -100px; width: 400px; height: 400px;
+                            background: rgba(255,255,255,0.03); border-radius: 50%;"></div>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="canvas192"></canvas>
+    <canvas id="canvas512"></canvas>
+
+    <script>
+        // Load and render SVG to different sizes
+        const sizes = [
+            { width: 192, height: 192, name: 'icon-192.png', canvas: 'canvas192' },
+            { width: 512, height: 512, name: 'icon-512.png', canvas: 'canvas512' }
+        ];
+
+        fetch('icon.svg')
+            .then(response => response.text())
+            .then(svgText => {
+                sizes.forEach(size => {
+                    const canvas = document.getElementById(size.canvas);
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = size.width;
+                    canvas.height = size.height;
+
+                    const img = new Image();
+                    const blob = new Blob([svgText], { type: 'image/svg+xml' });
+                    const url = URL.createObjectURL(blob);
+
+                    img.onload = function() {
+                        ctx.drawImage(img, 0, 0, size.width, size.height);
+                        URL.revokeObjectURL(url);
+
+                        // Create preview
+                        const iconBox = document.createElement('div');
+                        iconBox.className = 'icon-box';
+
+                        const preview = document.createElement('img');
+                        preview.src = canvas.toDataURL('image/png');
+                        preview.width = size.width;
+                        preview.style.maxWidth = '256px';
+
+                        const title = document.createElement('h3');
+                        title.textContent = `${size.width}x${size.height}`;
+
+                        const downloadBtn = document.createElement('button');
+                        downloadBtn.textContent = `Download ${size.name}`;
+                        downloadBtn.onclick = function() {
+                            const link = document.createElement('a');
+                            link.download = size.name;
+                            link.href = canvas.toDataURL('image/png');
+                            link.click();
+                        };
+
+                        iconBox.appendChild(preview);
+                        iconBox.appendChild(title);
+                        iconBox.appendChild(downloadBtn);
+                        document.getElementById('iconPreview').appendChild(iconBox);
+                    };
+
+                    img.src = url;
+                });
+            })
+            .catch(error => {
+                console.error('Error loading SVG:', error);
+                document.getElementById('iconPreview').innerHTML =
+                    '<p style="color: red;">Error loading SVG. Make sure icon.svg exists in the same directory.</p>';
+            });
+
+        // Add button to screenshot social card
+        const socialBtn = document.createElement('button');
+        socialBtn.textContent = '📸 Download Social Media Image';
+        socialBtn.style.display = 'block';
+        socialBtn.style.margin = '20px auto';
+        socialBtn.onclick = async function() {
+            const element = document.getElementById('socialCard');
+
+            // Try using html2canvas if available
+            if (typeof html2canvas !== 'undefined') {
+                const canvas = await html2canvas(element, {
+                    width: 1200,
+                    height: 630,
+                    scale: 2
+                });
+                const link = document.createElement('a');
+                link.download = 'stitch-tts-social.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            } else {
+                alert('Please right-click on the card above and select "Save image as..." or take a screenshot.\n\nRecommended size: 1200x630px for optimal social media sharing.');
+            }
+        };
+        document.querySelector('.social-preview').insertBefore(
+            socialBtn,
+            document.getElementById('socialCard')
+        );
+    </script>
+
+    <!-- Optional: Include html2canvas for better screenshot quality -->
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script> -->
+</body>
+</html>

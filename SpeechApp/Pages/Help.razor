@@ -1,0 +1,1067 @@
+@page "/help"
+
+<PageTitle>Help - Stitch Multi-Cloud TTS</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4 mb-8">
+    <MudText Typo="Typo.h3" Class="mb-2">
+        <MudIcon Icon="@Icons.Material.Filled.Help" Class="mr-2" />
+        Help & Documentation
+    </MudText>
+    <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-6">
+        Everything you need to know about Stitch Multi-Cloud Text-to-Speech
+    </MudText>
+
+    <!-- What is Stitch TTS -->
+    <MudCard Class="mb-4">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h5">
+                    <MudIcon Icon="@Icons.Material.Filled.Info" Class="mr-2" />
+                    What is Stitch Multi-Cloud TTS?
+                </MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudText Typo="Typo.body1" Class="mb-3">
+                Stitch is a <strong>privacy-first Progressive Web App</strong> that transforms text into natural-sounding speech
+                using multiple cloud providers and offline engines. Unlike traditional TTS services, Stitch runs entirely in your
+                browser, ensuring your data never passes through third-party servers (except for the TTS API calls themselves).
+            </MudText>
+
+            <MudText Typo="Typo.h6" Class="mb-2 mt-4">Why Choose Stitch?</MudText>
+            <MudList T="string" Dense="true">
+                <MudListItem T="string" Icon="@Icons.Material.Filled.Lock">
+                    <strong>Privacy-First:</strong> Your API keys are encrypted with AES-256-GCM and stored locally. Your text and files never touch our servers.
+                </MudListItem>
+                <MudListItem T="string" Icon="@Icons.Material.Filled.CompareArrows">
+                    <strong>Multi-Provider Support:</strong> Switch between Google Cloud TTS, ElevenLabs, Deepgram, Azure, and Amazon Polly to find the best voice for your needs.
+                </MudListItem>
+                <MudListItem T="string" Icon="@Icons.Material.Filled.CloudOff">
+                    <strong>Offline Capable:</strong> Download neural TTS models (Piper) or use browser-based voices (eSpeak-NG) for completely offline synthesis.
+                </MudListItem>
+                <MudListItem T="string" Icon="@Icons.Material.Filled.PictureAsPdf">
+                    <strong>File Processing:</strong> Upload PDFs or text files, extract text automatically, detect chapters, and convert entire documents to speech.
+                </MudListItem>
+                <MudListItem T="string" Icon="@Icons.Material.Filled.Downloading">
+                    <strong>No Installation Required:</strong> Works as a Progressive Web App (PWA) - install it like a native app or use directly in your browser.
+                </MudListItem>
+                <MudListItem T="string" Icon="@Icons.Material.Filled.Code">
+                    <strong>100% Open Source:</strong> Fully transparent codebase with no tracking, analytics, or data collection.
+                </MudListItem>
+            </MudList>
+
+            <MudText Typo="Typo.h6" Class="mb-2 mt-4">Perfect For:</MudText>
+            <MudText Typo="Typo.body2" Class="mb-2">
+                ✓ Creating audiobooks from text documents or PDFs<br/>
+                ✓ Accessibility tools for visually impaired users<br/>
+                ✓ Language learning with native pronunciation<br/>
+                ✓ Content creators producing voiceovers<br/>
+                ✓ Developers testing TTS providers before commitment<br/>
+                ✓ Anyone who values privacy and data ownership
+            </MudText>
+        </MudCardContent>
+    </MudCard>
+
+    <MudGrid>
+        <!-- Getting Started -->
+        <MudItem xs="12">
+            <MudCard>
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h5">
+                            <MudIcon Icon="@Icons.Material.Filled.Rocket" Class="mr-2" />
+                            Quick Start Guide
+                        </MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudAlert Severity="Severity.Info" Class="mb-4">
+                        <strong>First Time User?</strong> Follow these steps to get started in less than 5 minutes!
+                    </MudAlert>
+
+                    <MudText Typo="Typo.h6" Class="mb-2">Step 1: Create Your Master Password</MudText>
+                    <MudText Typo="Typo.body2" Class="mb-3">
+                        On first launch, you'll be prompted to create a master password. This password encrypts your API keys
+                        using AES-256-GCM encryption and stores them locally in your browser's storage.
+                        <strong>Important:</strong> Your password is never sent to any server, and there is no password recovery option.
+                        If you forget it, you'll need to reset the app (losing all saved API keys).
+                    </MudText>
+                    <MudText Typo="Typo.body2" Class="mb-4" Color="Color.Secondary">
+                        💡 <strong>Tip:</strong> Choose a password you can remember, but make it strong. Consider using a password manager.
+                    </MudText>
+
+                    <MudText Typo="Typo.h6" Class="mb-2">Step 2: Choose Your TTS Providers</MudText>
+                    <MudText Typo="Typo.body2" Class="mb-3">
+                        Stitch supports 7 TTS engines (5 cloud + 2 offline). You have two options:
+                    </MudText>
+                    <MudText Typo="Typo.body2" Class="mb-2">
+                        <strong>Option A: Use Cloud Providers (Best Quality)</strong><br/>
+                        Navigate to <MudLink Href="/apikeys"><strong>API Keys</strong></MudLink> and add credentials for at least one provider:
+                    </MudText>
+                    <ul class="mb-3">
+                        <li><strong>Google Cloud TTS</strong> - Best balance of quality and cost ($0.000016/char for Neural2)</li>
+                        <li><strong>ElevenLabs</strong> - Most natural voices, great for audiobooks (free tier: 10,000 chars/month)</li>
+                        <li><strong>Deepgram Aura</strong> - Ultra-low latency (&lt;200ms), ideal for real-time apps</li>
+                        <li><strong>Azure Cognitive Services</strong> - 100+ languages, excellent multilingual support</li>
+                        <li><strong>Amazon Polly</strong> - 100+ voices, multiple engine types (Standard, Neural, Long-form, Generative)</li>
+                    </ul>
+                    <MudText Typo="Typo.body2" Class="mb-2">
+                        <strong>Option B: Use Offline TTS (No Internet Required)</strong><br/>
+                        No API keys needed! Use the built-in offline engines:
+                    </MudText>
+                    <ul class="mb-4">
+                        <li><strong>Piper TTS</strong> - High-quality neural voices (50+ languages). Download models from <MudLink Href="/offline">Offline Mode</MudLink> page.</li>
+                        <li><strong>eSpeak-NG</strong> - Lightweight, instant synthesis (127+ languages). Uses your browser's built-in voices.</li>
+                    </ul>
+                    <MudText Typo="Typo.body2" Class="mb-4" Color="Color.Secondary">
+                        💡 <strong>Tip:</strong> You can use both! Set up cloud providers for premium quality, and download offline models for when you don't have internet.
+                    </MudText>
+
+                    <MudText Typo="Typo.h6" Class="mb-2">Step 3: Add Your API Keys (Cloud Providers Only)</MudText>
+                    <MudText Typo="Typo.body2" Class="mb-3">
+                        For each cloud provider you want to use, click the <strong>"Add Key"</strong> button on the API Keys page.
+                        See the <strong>Provider Setup Guides</strong> section below for step-by-step instructions on obtaining API keys.
+                        After entering a key, use the <strong>"Test Connection"</strong> button to verify it works.
+                    </MudText>
+
+                    <MudText Typo="Typo.h6" Class="mb-2">Step 4: Start Synthesizing Speech</MudText>
+                    <MudText Typo="Typo.body2" Class="mb-3">
+                        Go to the <MudLink Href="/"><strong>Home</strong></MudLink> page and follow these steps:
+                    </MudText>
+                    <ol class="mb-3">
+                        <li>Enter or paste your text in the text area (up to 100,000 characters)</li>
+                        <li>Select a <strong>TTS Provider</strong> from the dropdown</li>
+                        <li>Choose a <strong>Voice</strong> - use filters to narrow down by language, gender, or accent</li>
+                        <li>Adjust <strong>Speed</strong>, <strong>Pitch</strong>, and <strong>Volume</strong> if desired (optional)</li>
+                        <li>Click <strong>"Synthesize Speech"</strong></li>
+                        <li>Wait for synthesis to complete, then <strong>Play</strong> or <strong>Download</strong> your audio</li>
+                    </ol>
+                    <MudText Typo="Typo.body2" Class="mb-4" Color="Color.Secondary">
+                        💡 <strong>Tip:</strong> The estimated cost is shown in real-time as you type. Long text is automatically split into chunks for processing.
+                    </MudText>
+
+                    <MudText Typo="Typo.h6" Class="mb-2">Step 5: Upload Files (Optional)</MudText>
+                    <MudText Typo="Typo.body2" Class="mb-3">
+                        Want to convert a PDF or text file to speech? Use the <MudLink Href="/file-upload"><strong>File Upload</strong></MudLink> page:
+                    </MudText>
+                    <ol class="mb-3">
+                        <li>Drag and drop a PDF (up to 100 MB) or text file (up to 50 MB)</li>
+                        <li>The app extracts text automatically and detects chapters (if applicable)</li>
+                        <li>Review and edit the extracted text if needed</li>
+                        <li>Select your provider and voice</li>
+                        <li>Click <strong>"Continue to Synthesize"</strong> to transfer the text to the Home page</li>
+                    </ol>
+                    <MudText Typo="Typo.body2" Class="mb-4" Color="Color.Secondary">
+                        💡 <strong>Tip:</strong> For scanned PDFs, the app will warn you that OCR (Optical Character Recognition) may be needed for better text extraction.
+                    </MudText>
+
+                    <MudText Typo="Typo.h6" Class="mb-2">Step 6: Install as PWA (Optional but Recommended)</MudText>
+                    <MudText Typo="Typo.body2" Class="mb-3">
+                        Stitch works as a Progressive Web App. You can install it for a native app experience:
+                    </MudText>
+                    <ul class="mb-3">
+                        <li><strong>Desktop (Chrome/Edge):</strong> Click the install icon in the address bar (⊕ Install)</li>
+                        <li><strong>Mobile (Android):</strong> Tap the menu (⋮) → "Add to Home screen"</li>
+                        <li><strong>Mobile (iOS/Safari):</strong> Tap Share → "Add to Home Screen"</li>
+                    </ul>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        💡 <strong>Benefits:</strong> Works offline, faster loading, dedicated app window, access from your app drawer/home screen.
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <!-- Provider Comparison -->
+        <MudItem xs="12">
+            <MudCard>
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h5">
+                            <MudIcon Icon="@Icons.Material.Filled.CompareArrows" Class="mr-2" />
+                            TTS Provider Comparison
+                        </MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudText Typo="Typo.body1" Class="mb-4">
+                        Not sure which provider to choose? Here's a detailed comparison to help you decide:
+                    </MudText>
+
+                    <MudSimpleTable Dense="true" Hover="true" Bordered="true" Class="mb-4">
+                        <thead>
+                            <tr>
+                                <th>Provider</th>
+                                <th>Quality</th>
+                                <th>Cost</th>
+                                <th>Voices</th>
+                                <th>Languages</th>
+                                <th>Best For</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Google Cloud TTS</strong></td>
+                                <td>⭐⭐⭐⭐ Excellent</td>
+                                <td>💰 $0.000016/char (Neural2)</td>
+                                <td>100+ (Neural2, Chirp 3)</td>
+                                <td>40+</td>
+                                <td>General use, best value</td>
+                            </tr>
+                            <tr>
+                                <td><strong>ElevenLabs</strong></td>
+                                <td>⭐⭐⭐⭐⭐ Best-in-class</td>
+                                <td>💰💰 Varies by plan</td>
+                                <td>10,000+ (voice cloning)</td>
+                                <td>70+</td>
+                                <td>Audiobooks, podcasts, premium content</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Deepgram Aura</strong></td>
+                                <td>⭐⭐⭐⭐ Very good</td>
+                                <td>💰 $0.000015/char</td>
+                                <td>12 Aura voices</td>
+                                <td>9</td>
+                                <td>Real-time apps, low latency (&lt;200ms)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Azure Cognitive</strong></td>
+                                <td>⭐⭐⭐⭐ Excellent</td>
+                                <td>💰 $0.000016/char (Neural)</td>
+                                <td>100+ neural voices</td>
+                                <td>100+</td>
+                                <td>Multilingual projects, enterprise</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Amazon Polly</strong></td>
+                                <td>⭐⭐⭐⭐ Excellent</td>
+                                <td>💰 $0.000016/char (Neural)</td>
+                                <td>100+ voices</td>
+                                <td>41</td>
+                                <td>AWS ecosystem, long-form content</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Piper TTS</strong></td>
+                                <td>⭐⭐⭐ Good (neural)</td>
+                                <td>✅ FREE (offline)</td>
+                                <td>50+ downloadable models</td>
+                                <td>50+</td>
+                                <td>Offline use, privacy-critical apps</td>
+                            </tr>
+                            <tr>
+                                <td><strong>eSpeak-NG</strong></td>
+                                <td>⭐⭐ Basic (robotic)</td>
+                                <td>✅ FREE (offline)</td>
+                                <td>Browser-dependent</td>
+                                <td>127+</td>
+                                <td>Quick testing, offline fallback</td>
+                            </tr>
+                        </tbody>
+                    </MudSimpleTable>
+
+                    <MudText Typo="Typo.h6" Class="mb-2">Choosing the Right Provider:</MudText>
+                    <MudList T="string" Dense="true">
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Recommend">
+                            <strong>For everyday use:</strong> Start with <strong>Google Cloud TTS</strong> - excellent quality at reasonable cost
+                        </MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.AutoStories">
+                            <strong>For audiobooks/podcasts:</strong> Use <strong>ElevenLabs</strong> for the most natural, human-like voices
+                        </MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Speed">
+                            <strong>For real-time apps:</strong> <strong>Deepgram Aura</strong> has ultra-low latency (&lt;200ms)
+                        </MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Translate">
+                            <strong>For multilingual content:</strong> <strong>Azure</strong> supports 100+ languages with excellent quality
+                        </MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.CloudOff">
+                            <strong>For offline/privacy:</strong> Download <strong>Piper TTS</strong> models for neural quality without internet
+                        </MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Science">
+                            <strong>For testing:</strong> Use <strong>eSpeak-NG</strong> (instant, no setup) or ElevenLabs free tier
+                        </MudListItem>
+                    </MudList>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <!-- Offline Mode Guide -->
+        <MudItem xs="12">
+            <MudCard>
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h5">
+                            <MudIcon Icon="@Icons.Material.Filled.CloudOff" Class="mr-2" />
+                            Offline TTS Guide
+                        </MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudAlert Severity="Severity.Success" Class="mb-4">
+                        <strong>Zero Cost, Complete Privacy!</strong> Use offline TTS engines that run entirely in your browser - no API keys, no internet required, no data sent anywhere.
+                    </MudAlert>
+
+                    <MudText Typo="Typo.h6" Class="mb-2">🎙️ Piper TTS - High-Quality Neural Voices</MudText>
+                    <MudText Typo="Typo.body2" Class="mb-3">
+                        Piper is an open-source neural TTS engine that delivers quality comparable to cloud providers, but runs completely offline in your browser using WebAssembly.
+                    </MudText>
+
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">Features:</MudText>
+                    <ul class="mb-3">
+                        <li><strong>50+ Languages:</strong> Wide language coverage including English, Spanish, French, German, Chinese, Japanese, and many more</li>
+                        <li><strong>Neural Quality:</strong> Uses deep learning models for natural-sounding speech</li>
+                        <li><strong>Multiple Voices per Language:</strong> Choose from different accents, genders, and speaking styles</li>
+                        <li><strong>Downloadable Models:</strong> Each voice is 50-150 MB - download once, use forever</li>
+                        <li><strong>Origin Private File System:</strong> Models stored efficiently in your browser's private storage</li>
+                    </ul>
+
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">How to Use Piper TTS:</MudText>
+                    <ol class="mb-4">
+                        <li>Navigate to <MudLink Href="/offline"><strong>Offline Mode</strong></MudLink> page</li>
+                        <li>Browse available Piper voice models (organized by language)</li>
+                        <li>Click <strong>"Download Model"</strong> for the voices you want (50-150 MB each)</li>
+                        <li>Wait for download to complete (shows progress)</li>
+                        <li>Return to Home page and select <strong>Piper TTS</strong> as your provider</li>
+                        <li>Choose your downloaded voice and synthesize!</li>
+                    </ol>
+
+                    <MudText Typo="Typo.body2" Class="mb-4" Color="Color.Secondary">
+                        💡 <strong>Storage Tips:</strong> Browsers typically allow 1-2 GB of storage for PWAs. If you run out of space, delete unused models from the Offline Mode page. Models are stored permanently until you delete them.
+                    </MudText>
+
+                    <MudDivider Class="my-4" />
+
+                    <MudText Typo="Typo.h6" Class="mb-2">🗣️ eSpeak-NG - Instant Lightweight Synthesis</MudText>
+                    <MudText Typo="Typo.body2" Class="mb-3">
+                        eSpeak-NG uses your browser's built-in Web Speech API for instant text-to-speech synthesis. No downloads, no setup, just select and synthesize!
+                    </MudText>
+
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">Features:</MudText>
+                    <ul class="mb-3">
+                        <li><strong>127+ Languages:</strong> Widest language support of any TTS engine</li>
+                        <li><strong>Instant Synthesis:</strong> No model downloads required, works immediately</li>
+                        <li><strong>Tiny Footprint:</strong> Uses browser's built-in voices (~5 MB total)</li>
+                        <li><strong>Adjustable Parameters:</strong> Control speed, pitch, and volume</li>
+                        <li><strong>Perfect for Testing:</strong> Quick prototyping and testing before using paid providers</li>
+                    </ul>
+
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">How to Use eSpeak-NG:</MudText>
+                    <ol class="mb-4">
+                        <li>On Home page, select <strong>eSpeak-NG</strong> as your provider</li>
+                        <li>Choose a voice from the dropdown (uses your browser's system voices)</li>
+                        <li>Adjust speed, pitch, volume as needed</li>
+                        <li>Click <strong>"Synthesize Speech"</strong> - synthesis is instant!</li>
+                    </ol>
+
+                    <MudText Typo="Typo.body2" Class="mb-4" Color="Color.Secondary">
+                        💡 <strong>Note:</strong> eSpeak-NG quality is more "robotic" than neural TTS, but it's perfect for accessibility, quick testing, or as a fallback when offline.
+                    </MudText>
+
+                    <MudDivider Class="my-4" />
+
+                    <MudText Typo="Typo.h6" Class="mb-2">📊 Piper vs eSpeak-NG Comparison</MudText>
+                    <MudSimpleTable Dense="true" Hover="true" Bordered="true" Class="mb-3">
+                        <thead>
+                            <tr>
+                                <th>Feature</th>
+                                <th>Piper TTS</th>
+                                <th>eSpeak-NG</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Voice Quality</strong></td>
+                                <td>⭐⭐⭐ Neural (natural)</td>
+                                <td>⭐⭐ Basic (robotic)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Setup Required</strong></td>
+                                <td>Yes (download models)</td>
+                                <td>No (instant use)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Storage Space</strong></td>
+                                <td>50-150 MB per voice</td>
+                                <td>~5 MB total</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Languages</strong></td>
+                                <td>50+ languages</td>
+                                <td>127+ languages</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Internet Required</strong></td>
+                                <td>Only for initial download</td>
+                                <td>Never (uses browser)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Best For</strong></td>
+                                <td>Quality offline speech</td>
+                                <td>Quick testing, fallback</td>
+                            </tr>
+                        </tbody>
+                    </MudSimpleTable>
+
+                    <MudText Typo="Typo.body2" Class="mb-3" Color="Color.Secondary">
+                        💡 <strong>Recommendation:</strong> Download a few Piper models for your most-used languages for best quality. Use eSpeak-NG as a lightweight fallback or for quick tests.
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <!-- Privacy & Security -->
+        <MudItem xs="12">
+            <MudCard>
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h5">
+                            <MudIcon Icon="@Icons.Material.Filled.Security" Class="mr-2" />
+                            Privacy & Security
+                        </MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudAlert Severity="Severity.Success" Class="mb-4">
+                        <strong>Your Data Stays Yours:</strong> Stitch is built with privacy-first design. All processing happens in your browser, and your API keys are encrypted with military-grade encryption.
+                    </MudAlert>
+
+                    <MudText Typo="Typo.h6" Class="mb-2">🔐 How Your Data is Protected</MudText>
+
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">1. Client-Side Processing (Zero Server Trust)</MudText>
+                    <MudText Typo="Typo.body2" Class="mb-3">
+                        Stitch is a <strong>100% client-side application</strong>. All text processing, encryption, file parsing, and audio generation happens
+                        in your browser using WebAssembly. Your text and files <strong>never touch our servers</strong> - because we don't have any servers!
+                        The only external calls are directly to the TTS provider APIs you choose.
+                    </MudText>
+
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">2. AES-256-GCM Encryption for API Keys</MudText>
+                    <MudText Typo="Typo.body2" Class="mb-3">
+                        Your API keys are encrypted using <strong>AES-256-GCM</strong> (Advanced Encryption Standard with Galois/Counter Mode) - the same
+                        encryption standard used by governments and banks. Your master password is never stored anywhere - it's used to derive an encryption
+                        key via <strong>PBKDF2</strong> with 100,000 iterations, making brute-force attacks computationally infeasible.
+                    </MudText>
+
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">3. Local Storage Only</MudText>
+                    <MudText Typo="Typo.body2" Class="mb-3">
+                        All data is stored in your browser's local storage (for settings) and IndexedDB (for models). This data is sandboxed per-origin
+                        and cannot be accessed by other websites. Clearing your browser data will remove all stored information.
+                    </MudText>
+
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">4. No Tracking, No Analytics, No Telemetry</MudText>
+                    <MudText Typo="Typo.body2" Class="mb-4">
+                        Stitch does <strong>not collect any usage data</strong>. There are no analytics scripts, no error reporting services, no tracking pixels.
+                        We genuinely have no idea how you use the app, what text you synthesize, or which providers you prefer - and that's by design.
+                    </MudText>
+
+                    <MudDivider Class="my-4" />
+
+                    <MudText Typo="Typo.h6" Class="mb-2">🛡️ Security Best Practices</MudText>
+                    <MudList T="string" Dense="true">
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Check">
+                            <strong>Use a strong master password:</strong> Your password is the only thing protecting your encrypted API keys. Use a unique, strong password or a password manager.
+                        </MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Check">
+                            <strong>Don't share your master password:</strong> There is no password recovery mechanism. If you forget it, you'll need to reset the app.
+                        </MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Check">
+                            <strong>Restrict API keys:</strong> When creating API keys with cloud providers, restrict them to only TTS APIs for minimal attack surface.
+                        </MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Check">
+                            <strong>Review API key permissions:</strong> Follow the principle of least privilege - only grant necessary permissions.
+                        </MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Check">
+                            <strong>Use HTTPS:</strong> Stitch is served over HTTPS, ensuring your communication with TTS APIs is encrypted in transit.
+                        </MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Check">
+                            <strong>Audit your API usage:</strong> Regularly check your cloud provider dashboards to monitor API usage and detect any anomalies.
+                        </MudListItem>
+                    </MudList>
+
+                    <MudDivider Class="my-4" />
+
+                    <MudText Typo="Typo.h6" Class="mb-2">🌐 What Data Leaves Your Browser?</MudText>
+                    <MudText Typo="Typo.body2" Class="mb-3">
+                        To be completely transparent, here's what gets sent to external services:
+                    </MudText>
+                    <MudList T="string" Dense="true">
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.ArrowForward">
+                            <strong>Cloud TTS Providers:</strong> Your text (or text chunks) and your API key are sent directly to the provider you select (Google, ElevenLabs, etc.) over HTTPS.
+                        </MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Block">
+                            <strong>What's NOT sent:</strong> Your master password, your file contents before synthesis, your settings, your usage history, or any identifying information beyond what the TTS API requires.
+                        </MudListItem>
+                    </MudList>
+
+                    <MudText Typo="Typo.body2" Class="mt-3" Color="Color.Secondary">
+                        💡 <strong>For Maximum Privacy:</strong> Use offline TTS engines (Piper or eSpeak-NG) - your text never leaves your device!
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <!-- Provider Setup Guides -->
+        <MudItem xs="12">
+            <MudCard>
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h5">
+                            <MudIcon Icon="@Icons.Material.Filled.Cloud" Class="mr-2" />
+                            Provider Setup Guides
+                        </MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudExpansionPanels>
+                        <!-- Google Cloud TTS -->
+                        <MudExpansionPanel Text="Google Cloud TTS" id="google">
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Pricing:</strong> $0.000016/character (Neural2), $0.000004/character (Standard)
+                            </MudText>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Character Limit:</strong> 5,000 characters per request
+                            </MudText>
+                            <MudText Typo="Typo.body2" Class="mb-3">
+                                <strong>Features:</strong> 100+ Neural2 voices, 40+ languages, SSML support
+                            </MudText>
+
+                            <MudText Typo="Typo.subtitle2" Class="mb-2">Setup Steps:</MudText>
+                            <ol>
+                                <li>Go to <MudLink Href="https://console.cloud.google.com" Target="_blank">Google Cloud Console</MudLink></li>
+                                <li>Create a new project or select an existing one</li>
+                                <li>Enable the "Cloud Text-to-Speech API"</li>
+                                <li>Navigate to APIs & Services → Credentials</li>
+                                <li>Create an API Key (restrict it to Text-to-Speech API for security)</li>
+                                <li>Copy the API key and paste it in the API Keys page</li>
+                            </ol>
+                        </MudExpansionPanel>
+
+                        <!-- ElevenLabs -->
+                        <MudExpansionPanel Text="ElevenLabs" id="elevenlabs">
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Pricing:</strong> Varies by plan (10,000 free characters/month)
+                            </MudText>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Character Limit:</strong> 100,000 characters per request
+                            </MudText>
+                            <MudText Typo="Typo.body2" Class="mb-3">
+                                <strong>Features:</strong> Premium voices, voice cloning, 70+ languages
+                            </MudText>
+
+                            <MudText Typo="Typo.subtitle2" Class="mb-2">Setup Steps:</MudText>
+                            <ol>
+                                <li>Create an account at <MudLink Href="https://elevenlabs.io" Target="_blank">ElevenLabs</MudLink></li>
+                                <li>Navigate to Profile → API Keys</li>
+                                <li>Click "Create API Key"</li>
+                                <li>Copy the key and paste it in the API Keys page</li>
+                            </ol>
+                        </MudExpansionPanel>
+
+                        <!-- Deepgram -->
+                        <MudExpansionPanel Text="Deepgram Aura" id="deepgram">
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Pricing:</strong> $0.000015/character
+                            </MudText>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Character Limit:</strong> 2,000 characters per request
+                            </MudText>
+                            <MudText Typo="Typo.body2" Class="mb-3">
+                                <strong>Features:</strong> Ultra-low latency (&lt; 200ms), 12 Aura voices, 9 languages
+                            </MudText>
+
+                            <MudText Typo="Typo.subtitle2" Class="mb-2">Setup Steps:</MudText>
+                            <ol>
+                                <li>Sign up at <MudLink Href="https://deepgram.com" Target="_blank">Deepgram</MudLink></li>
+                                <li>Navigate to API Keys in the dashboard</li>
+                                <li>Create a new API key with TTS permissions</li>
+                                <li>Copy the key and paste it in the API Keys page</li>
+                            </ol>
+                        </MudExpansionPanel>
+
+                        <!-- Azure -->
+                        <MudExpansionPanel Text="Azure Cognitive Services" id="azure">
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Pricing:</strong> $0.000016/character (Neural)
+                            </MudText>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Character Limit:</strong> 3,000 characters per request
+                            </MudText>
+                            <MudText Typo="Typo.body2" Class="mb-3">
+                                <strong>Features:</strong> 100+ neural voices, 100+ languages, SSML support
+                            </MudText>
+
+                            <MudText Typo="Typo.subtitle2" Class="mb-2">Setup Steps:</MudText>
+                            <ol>
+                                <li>Go to <MudLink Href="https://portal.azure.com" Target="_blank">Azure Portal</MudLink></li>
+                                <li>Create a "Speech Services" resource</li>
+                                <li>Navigate to Keys and Endpoint</li>
+                                <li>Copy either KEY 1 or KEY 2</li>
+                                <li>Paste it in the API Keys page</li>
+                            </ol>
+                        </MudExpansionPanel>
+
+                        <!-- Amazon Polly -->
+                        <MudExpansionPanel Text="Amazon Polly" id="polly">
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Pricing:</strong> $0.000016/character (Neural), $0.000004/character (Standard)
+                            </MudText>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Character Limit:</strong> 3,000 characters per request
+                            </MudText>
+                            <MudText Typo="Typo.body2" Class="mb-3">
+                                <strong>Features:</strong> 100+ voices, 41 languages, 4 engine types
+                            </MudText>
+
+                            <MudText Typo="Typo.subtitle2" Class="mb-2">Setup Steps:</MudText>
+                            <ol>
+                                <li>Go to <MudLink Href="https://console.aws.amazon.com/iam" Target="_blank">AWS IAM Console</MudLink></li>
+                                <li>Create a new IAM user with Polly permissions (AmazonPollyFullAccess)</li>
+                                <li>Create access keys for the user</li>
+                                <li>Copy the Access Key ID and Secret Access Key</li>
+                                <li>In API Keys page, enter them as: <code>AccessKeyId:SecretAccessKey</code></li>
+                            </ol>
+                        </MudExpansionPanel>
+                    </MudExpansionPanels>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <!-- Troubleshooting -->
+        <MudItem xs="12">
+            <MudCard>
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h5">
+                            <MudIcon Icon="@Icons.Material.Filled.BuildCircle" Class="mr-2" />
+                            Troubleshooting Common Issues
+                        </MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudExpansionPanels MultiExpansion="true">
+                        <MudExpansionPanel Text="Master password won't unlock / 'Invalid password' error">
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Possible Causes:</strong>
+                            </MudText>
+                            <ul class="mb-3">
+                                <li>The password you entered doesn't match the one used to create the encryption</li>
+                                <li>Browser data was partially cleared, corrupting the encryption salt</li>
+                            </ul>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Solutions:</strong>
+                            </MudText>
+                            <ul class="mb-3">
+                                <li>Double-check your password (case-sensitive, no extra spaces)</li>
+                                <li>If you're certain the password is correct but it still doesn't work, your encryption data may be corrupted. Reset the app from Settings (you'll lose all saved API keys)</li>
+                                <li>Prevention: Write down or save your master password in a secure password manager</li>
+                            </ul>
+                        </MudExpansionPanel>
+
+                        <MudExpansionPanel Text="API key test fails / 'Invalid API key' error">
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Possible Causes:</strong>
+                            </MudText>
+                            <ul class="mb-3">
+                                <li>The API key is incorrect or has been revoked</li>
+                                <li>The API is not enabled in your cloud provider account</li>
+                                <li>API key restrictions are blocking the request</li>
+                                <li>Your account has billing issues</li>
+                            </ul>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Solutions:</strong>
+                            </MudText>
+                            <ul class="mb-3">
+                                <li><strong>Google Cloud:</strong> Ensure "Cloud Text-to-Speech API" is enabled in API Library. Check API key restrictions allow TTS API.</li>
+                                <li><strong>ElevenLabs:</strong> Verify your API key is active in your profile. Check if you've exceeded your monthly quota.</li>
+                                <li><strong>Azure:</strong> Confirm the Speech Services resource is active. Check the key in "Keys and Endpoint" section matches.</li>
+                                <li><strong>Amazon Polly:</strong> Format should be <code>AccessKeyId:SecretAccessKey</code>. Ensure IAM user has AmazonPollyFullAccess policy.</li>
+                                <li><strong>Deepgram:</strong> Verify API key has TTS permissions enabled.</li>
+                            </ul>
+                        </MudExpansionPanel>
+
+                        <MudExpansionPanel Text="Synthesis fails / Audio is silent / No audio generated">
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Possible Causes:</strong>
+                            </MudText>
+                            <ul class="mb-3">
+                                <li>Network error or timeout</li>
+                                <li>Text contains unsupported characters for the selected voice</li>
+                                <li>Rate limiting (too many requests)</li>
+                                <li>Insufficient account balance or quota exceeded</li>
+                            </ul>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Solutions:</strong>
+                            </MudText>
+                            <ul class="mb-3">
+                                <li>Check browser console (F12) for error messages</li>
+                                <li>Try a different voice or provider</li>
+                                <li>Reduce text length and try again</li>
+                                <li>Check your cloud provider dashboard for quota/billing status</li>
+                                <li>Wait a few minutes if rate limited, then retry</li>
+                                <li>For offline TTS (Piper), ensure the model is downloaded completely</li>
+                            </ul>
+                        </MudExpansionPanel>
+
+                        <MudExpansionPanel Text="File upload fails / 'Cannot read file' error">
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Possible Causes:</strong>
+                            </MudText>
+                            <ul class="mb-3">
+                                <li>File exceeds size limits (100 MB for PDF, 50 MB for text)</li>
+                                <li>PDF is encrypted or password-protected</li>
+                                <li>File encoding is not supported</li>
+                                <li>Browser security settings block file access</li>
+                            </ul>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Solutions:</strong>
+                            </MudText>
+                            <ul class="mb-3">
+                                <li>Compress large PDFs using online tools before uploading</li>
+                                <li>Remove password protection from PDFs</li>
+                                <li>For text files, save with UTF-8 encoding</li>
+                                <li>Try a different browser (Chrome, Firefox, Edge)</li>
+                                <li>For scanned PDFs, text extraction may be poor - consider enabling OCR</li>
+                            </ul>
+                        </MudExpansionPanel>
+
+                        <MudExpansionPanel Text="Piper model download stuck or fails">
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Possible Causes:</strong>
+                            </MudText>
+                            <ul class="mb-3">
+                                <li>Slow or interrupted internet connection</li>
+                                <li>Browser storage quota exceeded</li>
+                                <li>CDN unavailable or blocked</li>
+                            </ul>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Solutions:</strong>
+                            </MudText>
+                            <ul class="mb-3">
+                                <li>Cancel and retry download</li>
+                                <li>Delete unused models to free up space (Offline Mode page)</li>
+                                <li>Check browser storage settings - ensure site has permission</li>
+                                <li>Try downloading on a stable WiFi connection (avoid cellular for large models)</li>
+                                <li>Clear browser cache and try again</li>
+                            </ul>
+                        </MudExpansionPanel>
+
+                        <MudExpansionPanel Text="Voice list is empty or not loading">
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Possible Causes:</strong>
+                            </MudText>
+                            <ul class="mb-3">
+                                <li>API key not entered or encryption not unlocked</li>
+                                <li>Network error fetching voice list</li>
+                                <li>Provider API is down or degraded</li>
+                            </ul>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Solutions:</strong>
+                            </MudText>
+                            <ul class="mb-3">
+                                <li>Ensure you've unlocked the app with your master password</li>
+                                <li>Check that you've added an API key for the selected provider</li>
+                                <li>Refresh the page to force a new voice list fetch</li>
+                                <li>Try selecting a different provider to see if the issue is provider-specific</li>
+                                <li>For offline providers (Piper/eSpeak-NG), ensure models are downloaded</li>
+                            </ul>
+                        </MudExpansionPanel>
+
+                        <MudExpansionPanel Text="App is slow or freezes during synthesis">
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Possible Causes:</strong>
+                            </MudText>
+                            <ul class="mb-3">
+                                <li>Very long text being processed</li>
+                                <li>Too many browser tabs open</li>
+                                <li>Piper model loading into memory (first use after download)</li>
+                                <li>Insufficient device RAM</li>
+                            </ul>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Solutions:</strong>
+                            </MudText>
+                            <ul class="mb-3">
+                                <li>Close other tabs and applications</li>
+                                <li>For very long text (>10,000 characters), synthesis happens in chunks - be patient</li>
+                                <li>For Piper, first synthesis after model download may take 10-20 seconds to load the model into memory</li>
+                                <li>Use a device with at least 4 GB RAM for best performance</li>
+                                <li>Consider using cloud providers instead of offline TTS for very long documents</li>
+                            </ul>
+                        </MudExpansionPanel>
+
+                        <MudExpansionPanel Text="PWA won't install or doesn't appear in app list">
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Possible Causes:</strong>
+                            </MudText>
+                            <ul class="mb-3">
+                                <li>Browser doesn't support PWA installation</li>
+                                <li>Site not served over HTTPS (localhost is exempt)</li>
+                                <li>Service worker registration failed</li>
+                            </ul>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Solutions:</strong>
+                            </MudText>
+                            <ul class="mb-3">
+                                <li>Use a compatible browser: Chrome, Edge, Safari (iOS 16.4+), Firefox</li>
+                                <li>Look for the install icon in the address bar (⊕ symbol)</li>
+                                <li>On mobile, use browser menu → "Add to Home Screen"</li>
+                                <li>Check browser console for service worker errors</li>
+                                <li>You can still use the web version without installing</li>
+                            </ul>
+                        </MudExpansionPanel>
+                    </MudExpansionPanels>
+
+                    <MudAlert Severity="Severity.Info" Class="mt-4">
+                        <strong>Still Having Issues?</strong> Check the browser console (press F12) for error messages, which can provide more specific debugging information.
+                    </MudAlert>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <!-- FAQ -->
+        <MudItem xs="12">
+            <MudCard>
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h5">
+                            <MudIcon Icon="@Icons.Material.Filled.QuestionAnswer" Class="mr-2" />
+                            Frequently Asked Questions
+                        </MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudExpansionPanels MultiExpansion="true">
+                        <MudExpansionPanel Text="Is my data safe? What about privacy?">
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Absolutely!</strong> Stitch is designed with privacy as the top priority:
+                            </MudText>
+                            <ul class="mb-2">
+                                <li>All processing happens in your browser (100% client-side)</li>
+                                <li>API keys are encrypted with AES-256-GCM and stored locally</li>
+                                <li>No servers, no tracking, no analytics, no data collection</li>
+                                <li>Your text and files never touch our servers (we don't even have servers!)</li>
+                                <li>Only your text and API key are sent directly to the TTS provider you choose</li>
+                                <li>For maximum privacy, use offline TTS (Piper or eSpeak-NG) - your text never leaves your device</li>
+                            </ul>
+                            <MudText Typo="Typo.body2">
+                                See the <strong>Privacy & Security</strong> section above for detailed information.
+                            </MudText>
+                        </MudExpansionPanel>
+
+                        <MudExpansionPanel Text="Which TTS provider should I use?">
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                It depends on your needs:
+                            </MudText>
+                            <ul class="mb-2">
+                                <li><strong>Best overall:</strong> Google Cloud TTS (quality + cost balance)</li>
+                                <li><strong>Best quality:</strong> ElevenLabs (most natural, human-like voices)</li>
+                                <li><strong>Fastest:</strong> Deepgram Aura (ultra-low latency &lt;200ms)</li>
+                                <li><strong>Most languages:</strong> Azure Cognitive Services (100+ languages)</li>
+                                <li><strong>Best for privacy/offline:</strong> Piper TTS (neural quality, no internet)</li>
+                                <li><strong>Quick testing:</strong> eSpeak-NG (instant, no setup)</li>
+                            </ul>
+                            <MudText Typo="Typo.body2">
+                                See the <strong>TTS Provider Comparison</strong> section above for a detailed comparison table.
+                            </MudText>
+                        </MudExpansionPanel>
+
+                        <MudExpansionPanel Text="Can I use Stitch completely offline?">
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Yes!</strong> Stitch supports fully offline text-to-speech:
+                            </MudText>
+                            <ul class="mb-2">
+                                <li><strong>Piper TTS:</strong> Download neural TTS models (50-150 MB each) for high-quality offline synthesis. Works in 50+ languages.</li>
+                                <li><strong>eSpeak-NG:</strong> Uses your browser's built-in voices (no download needed). Works in 127+ languages, though quality is more robotic.</li>
+                                <li>Both work completely offline after initial setup (Piper requires model download first)</li>
+                                <li>The PWA can be installed and used offline for the UI, but cloud providers require internet</li>
+                            </ul>
+                            <MudText Typo="Typo.body2">
+                                See the <strong>Offline TTS Guide</strong> section above for detailed instructions.
+                            </MudText>
+                        </MudExpansionPanel>
+
+                        <MudExpansionPanel Text="How much does it cost to use Stitch?">
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Stitch is 100% free and open-source!</strong> However, cloud TTS providers charge for usage:
+                            </MudText>
+                            <ul class="mb-2">
+                                <li><strong>Google Cloud TTS:</strong> ~$0.016 per 1,000 characters (Neural2)</li>
+                                <li><strong>ElevenLabs:</strong> Free tier: 10,000 chars/month, then varies by plan</li>
+                                <li><strong>Deepgram:</strong> ~$0.015 per 1,000 characters</li>
+                                <li><strong>Azure:</strong> ~$0.016 per 1,000 characters (Neural)</li>
+                                <li><strong>Amazon Polly:</strong> ~$0.016 per 1,000 characters (Neural)</li>
+                                <li><strong>Piper TTS:</strong> FREE (offline, unlimited)</li>
+                                <li><strong>eSpeak-NG:</strong> FREE (offline, unlimited)</li>
+                            </ul>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                Example: Converting a 50,000-word book (~300,000 characters) costs about $4.80 with Google Cloud Neural2.
+                            </MudText>
+                            <MudText Typo="Typo.body2">
+                                The app shows real-time cost estimates as you type!
+                            </MudText>
+                        </MudExpansionPanel>
+
+                        <MudExpansionPanel Text="What happens if I forget my master password?">
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Unfortunately, there is no password recovery.</strong> Your master password is never stored anywhere - it's only used to derive the encryption key for your API keys.
+                            </MudText>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                If you forget your password:
+                            </MudText>
+                            <ul class="mb-2">
+                                <li>You'll need to reset the app from Settings → "Reset App Data"</li>
+                                <li>This will delete all encrypted API keys and settings</li>
+                                <li>You'll need to re-enter all your API keys after reset</li>
+                            </ul>
+                            <MudText Typo="Typo.body2">
+                                <strong>Prevention:</strong> Save your master password in a secure password manager or write it down and keep it safe.
+                            </MudText>
+                        </MudExpansionPanel>
+
+                        <MudExpansionPanel Text="Can I use SSML (Speech Synthesis Markup Language)?">
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Yes, for supported providers!</strong> SSML allows you to control pronunciation, pitch, speed, pauses, and more.
+                            </MudText>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                Providers with SSML support:
+                            </MudText>
+                            <ul class="mb-2">
+                                <li><strong>Google Cloud TTS:</strong> Full SSML support</li>
+                                <li><strong>Azure Cognitive Services:</strong> Full SSML support</li>
+                                <li><strong>Amazon Polly:</strong> Full SSML support</li>
+                                <li><strong>ElevenLabs:</strong> Limited (no SSML, but has voice parameters)</li>
+                                <li><strong>Deepgram:</strong> No SSML support</li>
+                            </ul>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                Example SSML:
+                            </MudText>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <code>&lt;speak&gt;Here is a sentence with a &lt;break time="500ms"/&gt; pause.&lt;/speak&gt;</code>
+                            </MudText>
+                            <MudText Typo="Typo.body2">
+                                Just paste SSML directly into the text area - the app will auto-detect and handle it.
+                            </MudText>
+                        </MudExpansionPanel>
+
+                        <MudExpansionPanel Text="How do I convert a PDF to speech?">
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                Easy! Follow these steps:
+                            </MudText>
+                            <ol class="mb-2">
+                                <li>Go to <MudLink Href="/file-upload">File Upload</MudLink> page</li>
+                                <li>Drag and drop your PDF (up to 100 MB)</li>
+                                <li>The app extracts text automatically using PDF.js</li>
+                                <li>Review the extracted text (edit if needed)</li>
+                                <li>Select your provider and voice</li>
+                                <li>Click "Continue to Synthesize" to transfer the text to the Home page</li>
+                                <li>Click "Synthesize Speech" to generate audio</li>
+                            </ol>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>For scanned PDFs:</strong> The app will detect if your PDF is scanned (image-based) and warn you that text extraction may be poor. You may need to use external OCR tools first.
+                            </MudText>
+                        </MudExpansionPanel>
+
+                        <MudExpansionPanel Text="What's the maximum text length I can synthesize?">
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                The text area accepts up to <strong>100,000 characters</strong>. However, each provider has per-request limits:
+                            </MudText>
+                            <ul class="mb-2">
+                                <li><strong>Google Cloud TTS:</strong> 5,000 chars per request</li>
+                                <li><strong>ElevenLabs:</strong> 100,000 chars per request</li>
+                                <li><strong>Deepgram:</strong> 2,000 chars per request</li>
+                                <li><strong>Azure:</strong> 3,000 chars per request</li>
+                                <li><strong>Amazon Polly:</strong> 3,000 chars per request</li>
+                                <li><strong>Piper/eSpeak-NG:</strong> No practical limit (offline)</li>
+                            </ul>
+                            <MudText Typo="Typo.body2">
+                                <strong>Don't worry!</strong> The app automatically splits long text into chunks at sentence boundaries, synthesizes each chunk, then merges them into a single audio file for you.
+                            </MudText>
+                        </MudExpansionPanel>
+
+                        <MudExpansionPanel Text="Can I adjust voice speed, pitch, and volume?">
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Yes!</strong> Use the sliders on the Home page:
+                            </MudText>
+                            <ul class="mb-2">
+                                <li><strong>Speed:</strong> 0.25x to 4.0x (default 1.0x = normal)</li>
+                                <li><strong>Pitch:</strong> -20 to +20 semitones (provider-dependent)</li>
+                                <li><strong>Volume:</strong> 0% to 200% (provider-dependent)</li>
+                            </ul>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Note:</strong> Not all providers support all parameters:
+                            </MudText>
+                            <ul class="mb-2">
+                                <li>Google, Azure, Polly: Support all three</li>
+                                <li>ElevenLabs: Custom stability/similarity parameters instead</li>
+                                <li>Deepgram: Limited parameter support</li>
+                                <li>Piper/eSpeak-NG: Support speed, pitch, volume</li>
+                            </ul>
+                        </MudExpansionPanel>
+
+                        <MudExpansionPanel Text="How do I install Stitch as a desktop/mobile app?">
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                Stitch is a Progressive Web App (PWA) - you can install it like a native app:
+                            </MudText>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Desktop (Chrome, Edge, Brave):</strong>
+                            </MudText>
+                            <ul class="mb-2">
+                                <li>Click the install icon (⊕) in the address bar</li>
+                                <li>Or: Menu → "Install Stitch Multi-Cloud TTS"</li>
+                            </ul>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Android (Chrome, Edge):</strong>
+                            </MudText>
+                            <ul class="mb-2">
+                                <li>Tap the menu (⋮) → "Add to Home screen"</li>
+                                <li>The app icon will appear in your app drawer</li>
+                            </ul>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>iOS/iPadOS (Safari):</strong>
+                            </MudText>
+                            <ul class="mb-2">
+                                <li>Tap the Share button → "Add to Home Screen"</li>
+                                <li>Requires iOS 16.4+ for full PWA support</li>
+                            </ul>
+                            <MudText Typo="Typo.body2">
+                                <strong>Benefits:</strong> Faster loading, works offline (after first load), dedicated app window, icon in app drawer.
+                            </MudText>
+                        </MudExpansionPanel>
+
+                        <MudExpansionPanel Text="Is there a limit to how many API keys I can add?">
+                            <MudText Typo="Typo.body2">
+                                <strong>No limit!</strong> You can add multiple API keys for each provider if needed (e.g., personal and work accounts). However, you can only use one API key per provider at a time. Switch between them by updating the API key in the API Keys page.
+                            </MudText>
+                        </MudExpansionPanel>
+
+                        <MudExpansionPanel Text="Can I use Stitch for commercial purposes?">
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Yes!</strong> Stitch is open-source (check the repository for license details). However, commercial use depends on:
+                            </MudText>
+                            <ul class="mb-2">
+                                <li><strong>TTS Provider Terms:</strong> Each cloud provider has their own terms of service. Check with Google, ElevenLabs, Azure, AWS, and Deepgram for commercial usage rights.</li>
+                                <li><strong>Voice Licensing:</strong> Some voices may have restrictions on commercial use (especially ElevenLabs voice cloning).</li>
+                                <li><strong>Offline TTS:</strong> Piper models are open-source (check individual model licenses). eSpeak-NG is GPL-licensed.</li>
+                            </ul>
+                            <MudText Typo="Typo.body2">
+                                Always review the terms of service for your chosen TTS provider.
+                            </MudText>
+                        </MudExpansionPanel>
+                    </MudExpansionPanels>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <!-- Support -->
+        <MudItem xs="12">
+            <MudCard>
+                <MudCardContent Class="text-center">
+                    <MudText Typo="Typo.h6" Class="mb-3">Need More Help?</MudText>
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Coffee"
+                               Href="https://buymeacoffee.com/rahmatsaeedi"
+                               Target="_blank">
+                        Support the Project
+                    </MudButton>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</MudContainer>

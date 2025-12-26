@@ -1,0 +1,63 @@
+{
+  "name": "Stitch Multi-Cloud Text-to-Speech",
+  "short_name": "Stitch TTS",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#121212",
+  "theme_color": "#7B1FA2",
+  "description": "Transform text into natural speech with Stitch - a privacy-first PWA supporting 5 cloud TTS providers. Features offline TTS, file upload, encrypted storage, and works 100% in your browser. No server, no tracking, your data stays private.",
+  "categories": ["productivity", "utilities", "accessibility", "education"],
+  "prefer_related_applications": false,
+  "lang": "en-US",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "New Synthesis",
+      "short_name": "Synthesize",
+      "description": "Convert text to speech instantly",
+      "url": "./",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Upload File",
+      "short_name": "Upload",
+      "description": "Upload PDF or text file to convert",
+      "url": "./upload",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "API Keys",
+      "short_name": "Keys",
+      "description": "Manage your TTS provider keys",
+      "url": "./api-keys",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "share_target": {
+    "action": "./upload",
+    "method": "GET",
+    "enctype": "application/x-www-form-urlencoded",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  }
+}

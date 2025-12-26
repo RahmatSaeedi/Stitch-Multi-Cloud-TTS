@@ -1,0 +1,106 @@
+@using SpeechApp.Services.Interfaces
+@inject IErrorLoggingService ErrorLogging
+
+<Microsoft.AspNetCore.Components.Web.ErrorBoundary @ref="_errorBoundary">
+    <ChildContent>
+        @ChildContent
+    </ChildContent>
+    <ErrorContent Context="exception">
+        @{
+            // Log the error when it's first displayed
+            _ = LogErrorAsync(exception);
+        }
+        <div class="error-boundary">
+            <MudPaper Elevation="3" Class="pa-6 ma-4">
+                <div class="d-flex align-center mb-4">
+                    <MudIcon Icon="@Icons.Material.Filled.Error" Color="Color.Error" Size="Size.Large" Class="mr-3" />
+                    <MudText Typo="Typo.h5" Color="Color.Error">Something went wrong</MudText>
+                </div>
+
+                <MudText Typo="Typo.body1" Class="mb-4">
+                    @GetErrorMessage(exception)
+                </MudText>
+
+                @if (_showDetails)
+                {
+                    <MudAlert Severity="Severity.Warning" Class="mb-4">
+                        <MudText Typo="Typo.body2" Class="mb-2"><strong>Error Details:</strong></MudText>
+                        <MudText Typo="Typo.body2" Style="font-family: monospace; font-size: 0.875rem;">
+                            @exception.Message
+                        </MudText>
+                        @if (!string.IsNullOrEmpty(exception.StackTrace))
+                        {
+                            <MudText Typo="Typo.body2" Class="mt-2" Style="font-family: monospace; font-size: 0.75rem; max-height: 200px; overflow-y: auto;">
+                                @exception.StackTrace
+                            </MudText>
+                        }
+                    </MudAlert>
+                }
+
+                <div class="d-flex gap-2">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Recover">
+                        Try Again
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="ToggleDetails">
+                        @(_showDetails ? "Hide" : "Show") Details
+                    </MudButton>
+                    @if (!string.IsNullOrEmpty(HomeUrl))
+                    {
+                        <MudButton Variant="Variant.Text" Color="Color.Default" Href="@HomeUrl">
+                            Go to Home
+                        </MudButton>
+                    }
+                </div>
+            </MudPaper>
+        </div>
+    </ErrorContent>
+</Microsoft.AspNetCore.Components.Web.ErrorBoundary>
+
+@code {
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    [Parameter]
+    public string? HomeUrl { get; set; } = "/";
+
+    [Parameter]
+    public string? Component { get; set; }
+
+    private Microsoft.AspNetCore.Components.Web.ErrorBoundary? _errorBoundary;
+    private bool _showDetails = false;
+
+    protected override void OnParametersSet()
+    {
+        // Reset error boundary when parameters change
+        _errorBoundary?.Recover();
+    }
+
+    private string GetErrorMessage(Exception exception)
+    {
+        return ErrorMessageHelper.GetUserFriendlyMessage(exception, Component);
+    }
+
+    private async void Recover()
+    {
+        _showDetails = false;
+        _errorBoundary?.Recover();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void ToggleDetails()
+    {
+        _showDetails = !_showDetails;
+    }
+
+    private async Task LogErrorAsync(Exception exception)
+    {
+        // Log the error
+        await ErrorLogging.LogErrorAsync(new ErrorLog
+        {
+            Message = exception.Message,
+            StackTrace = exception.StackTrace,
+            Severity = ErrorSeverity.Critical,
+            Component = Component ?? "Unknown"
+        });
+    }
+}

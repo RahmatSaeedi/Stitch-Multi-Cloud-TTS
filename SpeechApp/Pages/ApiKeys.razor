@@ -1,0 +1,318 @@
+@page "/api-keys"
+@inject IEncryptionService EncryptionService
+@inject IStorageService StorageService
+@inject ITTSProviderManager ProviderManager
+@inject ISnackbar Snackbar
+
+<PageTitle>API Keys - Multi-Cloud TTS</PageTitle>
+
+<MudText Typo="Typo.h3" GutterBottom="true">API Key Management</MudText>
+<MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">
+    Securely store and manage your TTS provider API keys. All keys are encrypted with AES-GCM.
+</MudText>
+
+@if (!EncryptionService.IsInitialized)
+{
+    <MudAlert Severity="Severity.Warning">
+        <MudText>
+            Please enter your master password on the <MudLink Href="/">home page</MudLink> before managing API keys.
+        </MudText>
+        <MudText Class="mt-2">
+            Alternatively, you can reset the app in <MudLink Href="/settings">Settings</MudLink>, which will cause all previous API keys and configurations to be lost.
+        </MudText>
+    </MudAlert>
+}
+else
+{
+    <MudGrid>
+        @foreach (var provider in _providers)
+        {
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Elevation="2">
+                    <MudText Typo="Typo.h6" Class="mb-2">
+                        @provider.DisplayName
+                    </MudText>
+
+                    @if (_apiKeys.ContainsKey(provider.Id) && !string.IsNullOrEmpty(_apiKeys[provider.Id]))
+                    {
+                        <MudChip T="string" Color="Color.Success" Size="Size.Small" Class="mb-3">
+                            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Class="mr-1" />
+                            API Key Configured
+                        </MudChip>
+
+                        <MudTextField Value="@GetMaskedKey(_apiKeys[provider.Id])"
+                                      Label="Current API Key"
+                                      Variant="Variant.Outlined"
+                                      ReadOnly="true"
+                                      Class="mb-3" />
+
+                        <MudStack Row="true" Spacing="2">
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Primary"
+                                       OnClick="@(() => TestApiKey(provider.Id))"
+                                       Disabled="_isTesting[provider.Id]"
+                                       StartIcon="@Icons.Material.Filled.Verified">
+                                @if (_isTesting[provider.Id])
+                                {
+                                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                                    <span>Testing...</span>
+                                }
+                                else
+                                {
+                                    <span>Test</span>
+                                }
+                            </MudButton>
+
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Secondary"
+                                       OnClick="@(() => StartUpdateKey(provider.Id))"
+                                       StartIcon="@Icons.Material.Filled.Edit">
+                                Update
+                            </MudButton>
+
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Error"
+                                       OnClick="@(() => DeleteApiKey(provider.Id))"
+                                       StartIcon="@Icons.Material.Filled.Delete">
+                                Delete
+                            </MudButton>
+                        </MudStack>
+                    }
+                    else
+                    {
+                        <MudChip T="string" Color="Color.Warning" Size="Size.Small" Class="mb-3">
+                            <MudIcon Icon="@Icons.Material.Filled.Warning" Size="Size.Small" Class="mr-1" />
+                            Not Configured
+                        </MudChip>
+
+                        @if (_isAddingKey.ContainsKey(provider.Id) && _isAddingKey[provider.Id])
+                        {
+                            <MudTextField @bind-Value="_newKeys[provider.Id]"
+                                          Label="API Key"
+                                          Variant="Variant.Outlined"
+                                          InputType="InputType.Password"
+                                          Class="mb-3" />
+
+                            <MudStack Row="true" Spacing="2">
+                                <MudButton Variant="Variant.Filled"
+                                           Color="Color.Primary"
+                                           OnClick="@(() => SaveApiKey(provider.Id))"
+                                           Disabled="_isSaving[provider.Id]">
+                                    @if (_isSaving[provider.Id])
+                                    {
+                                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                                    }
+                                    Save
+                                </MudButton>
+
+                                <MudButton Variant="Variant.Text"
+                                           OnClick="@(() => CancelAddKey(provider.Id))">
+                                    Cancel
+                                </MudButton>
+                            </MudStack>
+                        }
+                        else
+                        {
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       OnClick="@(() => StartAddKey(provider.Id))"
+                                       StartIcon="@Icons.Material.Filled.Add">
+                                Add API Key
+                            </MudButton>
+                        }
+                    }
+
+                    @if (!string.IsNullOrEmpty(provider.SetupGuideUrl))
+                    {
+                        <MudText Typo="Typo.caption" Class="mt-2">
+                            <MudLink Href="@provider.SetupGuideUrl">How to get an API key</MudLink>
+                        </MudText>
+                    }
+                </MudPaper>
+            </MudItem>
+        }
+    </MudGrid>
+
+    <MudDivider Class="my-4" />
+
+    <MudPaper Class="pa-4" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-2">Security Information</MudText>
+        <MudList T="string" Dense="true">
+            <MudListItem T="string" Icon="@Icons.Material.Filled.Lock">
+                All API keys are encrypted using AES-GCM 256-bit encryption
+            </MudListItem>
+            <MudListItem T="string" Icon="@Icons.Material.Filled.Key">
+                Encryption key is derived from your master password using PBKDF2 (100,000 iterations)
+            </MudListItem>
+            <MudListItem T="string" Icon="@Icons.Material.Filled.Security">
+                Keys are stored locally in your browser and never sent to any server
+            </MudListItem>
+            <MudListItem T="string" Icon="@Icons.Material.Filled.Cloud">
+                API calls are made directly from your browser to the TTS providers
+            </MudListItem>
+        </MudList>
+    </MudPaper>
+}
+
+@code {
+    private List<ProviderInfo> _providers = new();
+    private Dictionary<string, string> _apiKeys = new();
+    private Dictionary<string, string> _newKeys = new();
+    private Dictionary<string, bool> _isAddingKey = new();
+    private Dictionary<string, bool> _isSaving = new();
+    private Dictionary<string, bool> _isTesting = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Only show providers that require API keys (exclude offline TTS)
+        _providers = ProviderManager.GetAllProviders()
+            .Where(p => p.RequiresApiKey)
+            .ToList();
+
+        // Initialize dictionaries
+        foreach (var provider in _providers)
+        {
+            _newKeys[provider.Id] = string.Empty;
+            _isAddingKey[provider.Id] = false;
+            _isSaving[provider.Id] = false;
+            _isTesting[provider.Id] = false;
+
+            // Load existing keys
+            if (EncryptionService.IsInitialized)
+            {
+                var apiKey = await StorageService.GetApiKeyAsync(provider.Id);
+                if (!string.IsNullOrEmpty(apiKey))
+                {
+                    _apiKeys[provider.Id] = apiKey;
+                }
+            }
+        }
+    }
+
+    private void StartAddKey(string providerId)
+    {
+        _isAddingKey[providerId] = true;
+        _newKeys[providerId] = string.Empty;
+    }
+
+    private void StartUpdateKey(string providerId)
+    {
+        _isAddingKey[providerId] = true;
+        _newKeys[providerId] = string.Empty;
+    }
+
+    private void CancelAddKey(string providerId)
+    {
+        _isAddingKey[providerId] = false;
+        _newKeys[providerId] = string.Empty;
+    }
+
+    private async Task SaveApiKey(string providerId)
+    {
+        if (string.IsNullOrWhiteSpace(_newKeys[providerId]))
+        {
+            Snackbar.Add("Please enter an API key", Severity.Warning);
+            return;
+        }
+
+        _isSaving[providerId] = true;
+
+        try
+        {
+            // Validate the key first
+            var provider = ProviderManager.GetProvider(providerId);
+            if (provider != null)
+            {
+                var isValid = await provider.ValidateApiKeyAsync(_newKeys[providerId]);
+                if (!isValid)
+                {
+                    Snackbar.Add($"Invalid API key for {provider.GetProviderInfo().DisplayName}", Severity.Error);
+                    _isSaving[providerId] = false;
+                    return;
+                }
+            }
+
+            // Save the key
+            await StorageService.SetApiKeyAsync(providerId, _newKeys[providerId]);
+            _apiKeys[providerId] = _newKeys[providerId];
+
+            // Set it on the provider
+            provider?.SetApiKey(_newKeys[providerId]);
+
+            Snackbar.Add("API key saved successfully!", Severity.Success);
+            _isAddingKey[providerId] = false;
+            _newKeys[providerId] = string.Empty;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error saving API key: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isSaving[providerId] = false;
+        }
+    }
+
+    private async Task DeleteApiKey(string providerId)
+    {
+        try
+        {
+            await StorageService.RemoveApiKeyAsync(providerId);
+            _apiKeys.Remove(providerId);
+
+            var provider = ProviderManager.GetProvider(providerId);
+            provider?.SetApiKey(string.Empty);
+
+            Snackbar.Add("API key deleted successfully", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error deleting API key: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task TestApiKey(string providerId)
+    {
+        _isTesting[providerId] = true;
+
+        try
+        {
+            var provider = ProviderManager.GetProvider(providerId);
+            if (provider != null && _apiKeys.ContainsKey(providerId))
+            {
+                var isValid = await provider.ValidateApiKeyAsync(_apiKeys[providerId]);
+                if (isValid)
+                {
+                    Snackbar.Add($"API key is valid!", Severity.Success);
+                }
+                else
+                {
+                    Snackbar.Add($"API key validation failed", Severity.Error);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error testing API key: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isTesting[providerId] = false;
+        }
+    }
+
+    private string GetMaskedKey(string apiKey)
+    {
+        if (string.IsNullOrEmpty(apiKey))
+        {
+            return string.Empty;
+        }
+
+        if (apiKey.Length <= 4)
+        {
+            return new string('*', apiKey.Length);
+        }
+
+        return new string('*', apiKey.Length - 4) + apiKey.Substring(apiKey.Length - 4);
+    }
+}

@@ -1,0 +1,387 @@
+@page "/settings"
+@using SpeechApp.Services.Interfaces
+@using Blazored.LocalStorage
+@inject ITTSProviderManager ProviderManager
+@inject ILocalStorageService LocalStorage
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<PageTitle>Settings - Multi-Cloud TTS</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4 mb-8">
+    <MudText Typo="Typo.h4" Class="mb-2">
+        <MudIcon Icon="@Icons.Material.Filled.Settings" Class="mr-2" />
+        Settings
+    </MudText>
+    <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-6">
+        Customize your TTS experience
+    </MudText>
+
+    <MudGrid>
+        <!-- Theme Settings -->
+        <MudItem xs="12" md="6">
+            <MudCard>
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">
+                            <MudIcon Icon="@Icons.Material.Filled.Palette" Class="mr-2" />
+                            Appearance
+                        </MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudSelect T="string" Value="_selectedTheme"
+                               Label="Theme"
+                               Variant="Variant.Outlined"
+                               ValueChanged="OnThemeChanged">
+                        <MudSelectItem T="string" Value="@("light")">Light</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("dark")">Dark</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("system")">System Default</MudSelectItem>
+                    </MudSelect>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
+                        Choose your preferred color theme
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <!-- Default Provider -->
+        <MudItem xs="12" md="6">
+            <MudCard>
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">
+                            <MudIcon Icon="@Icons.Material.Filled.Cloud" Class="mr-2" />
+                            Default Provider
+                        </MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudSelect T="string" Value="_defaultProviderId"
+                               Label="Default TTS Provider"
+                               Variant="Variant.Outlined"
+                               ValueChanged="OnDefaultProviderChanged">
+                        @foreach (var provider in _providers)
+                        {
+                            <MudSelectItem T="string" Value="@provider.Id">
+                                @provider.DisplayName
+                            </MudSelectItem>
+                        }
+                    </MudSelect>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
+                        Provider to use by default when app starts
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <!-- Voice Settings -->
+        <MudItem xs="12">
+            <MudCard>
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">
+                            <MudIcon Icon="@Icons.Material.Filled.RecordVoiceOver" Class="mr-2" />
+                            Default Voices
+                        </MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudText Typo="Typo.body2" Class="mb-4">
+                        Set your preferred default voice for each provider
+                    </MudText>
+                    <MudGrid>
+                        @foreach (var provider in _providers)
+                        {
+                            <MudItem xs="12" md="6" lg="4">
+                                <MudCard Outlined="true">
+                                    <MudCardContent>
+                                        <MudText Typo="Typo.subtitle2" Class="mb-2">
+                                            @provider.DisplayName
+                                        </MudText>
+                                        @if (_providerVoices.ContainsKey(provider.Id) && _providerVoices[provider.Id].Any())
+                                        {
+                                            <MudSelect T="string"
+                                                       Value="@(_defaultVoices.ContainsKey(provider.Id) ? _defaultVoices[provider.Id] : null)"
+                                                       ValueChanged="@(value => OnDefaultVoiceChanged(provider.Id, value))"
+                                                       Label="Default Voice"
+                                                       Variant="Variant.Outlined"
+                                                       Dense="true">
+                                                @foreach (var voice in _providerVoices[provider.Id].Take(20))
+                                                {
+                                                    <MudSelectItem T="string" Value="@voice.Id">
+                                                        @voice.Name
+                                                    </MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        }
+                                        else
+                                        {
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                                No API key configured
+                                            </MudText>
+                                        }
+                                    </MudCardContent>
+                                </MudCard>
+                            </MudItem>
+                        }
+                    </MudGrid>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <!-- Storage Management -->
+        <MudItem xs="12" md="6">
+            <MudCard>
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">
+                            <MudIcon Icon="@Icons.Material.Filled.Storage" Class="mr-2" />
+                            Storage Management
+                        </MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudText Typo="Typo.body2" Class="mb-3">
+                        Manage cached data and storage
+                    </MudText>
+
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Warning"
+                               StartIcon="@Icons.Material.Filled.ClearAll"
+                               OnClick="ClearVoiceCache"
+                               FullWidth="true"
+                               Class="mb-2">
+                        Clear Voice Cache
+                    </MudButton>
+
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Error"
+                               StartIcon="@Icons.Material.Filled.DeleteForever"
+                               OnClick="ClearAllData"
+                               FullWidth="true">
+                        Clear All App Data
+                    </MudButton>
+
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
+                        Warning: Clearing all data will remove API keys and settings
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <!-- About Section -->
+        <MudItem xs="12" md="6">
+            <MudCard>
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">
+                            <MudIcon Icon="@Icons.Material.Filled.Info" Class="mr-2" />
+                            About
+                        </MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudText Typo="Typo.body2" Class="mb-2">
+                        <strong>Multi-Cloud TTS PWA</strong>
+                    </MudText>
+                    <MudText Typo="Typo.body2" Class="mb-2">
+                        Version: 1.0.0
+                    </MudText>
+                    <MudText Typo="Typo.body2" Class="mb-3">
+                        A privacy-focused text-to-speech application
+                    </MudText>
+
+                    <MudDivider Class="my-3" />
+
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                        All processing happens in your browser. Your API keys and data never leave your device.
+                    </MudText>
+
+                    <MudButton Variant="Variant.Text"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Coffee"
+                               Href="https://buymeacoffee.com/rahmatsaeedi"
+                               Target="_blank"
+                               Class="mt-3">
+                        Support Development
+                    </MudButton>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <!-- Error Logs -->
+        <MudItem xs="12">
+            <ErrorLogViewer MaxErrors="50" />
+        </MudItem>
+
+        <!-- Reset Settings -->
+        <MudItem xs="12">
+            <MudCard>
+                <MudCardContent>
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Secondary"
+                               StartIcon="@Icons.Material.Filled.RestartAlt"
+                               OnClick="ResetToDefaults">
+                        Reset All Settings to Defaults
+                    </MudButton>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    private List<ProviderInfo> _providers = new();
+    private Dictionary<string, List<Voice>> _providerVoices = new();
+    private Dictionary<string, string> _defaultVoices = new();
+    private string _selectedTheme = "system";
+    private string? _defaultProviderId;
+
+    private const string THEME_KEY = "app_theme";
+    private const string DEFAULT_PROVIDER_KEY = "default_provider";
+    private const string DEFAULT_VOICE_PREFIX = "default_voice_";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _providers = ProviderManager.GetAllProviders();
+
+        // Load saved settings
+        await LoadSettings();
+
+        // Load voices for all providers
+        await LoadAllVoices();
+    }
+
+    private async Task LoadSettings()
+    {
+        _selectedTheme = await LocalStorage.GetItemAsStringAsync(THEME_KEY) ?? "system";
+        _defaultProviderId = await LocalStorage.GetItemAsStringAsync(DEFAULT_PROVIDER_KEY) ?? _providers.FirstOrDefault()?.Id;
+
+        // Load default voices
+        foreach (var provider in _providers)
+        {
+            var voiceKey = $"{DEFAULT_VOICE_PREFIX}{provider.Id}";
+            var defaultVoice = await LocalStorage.GetItemAsStringAsync(voiceKey);
+            if (!string.IsNullOrEmpty(defaultVoice))
+            {
+                _defaultVoices[provider.Id] = defaultVoice;
+            }
+        }
+    }
+
+    private async Task LoadAllVoices()
+    {
+        foreach (var provider in _providers)
+        {
+            var ttsProvider = ProviderManager.GetProvider(provider.Id);
+            if (ttsProvider != null)
+            {
+                try
+                {
+                    var voices = await ttsProvider.GetVoicesAsync();
+                    if (voices.Any())
+                    {
+                        _providerVoices[provider.Id] = voices;
+                    }
+                }
+                catch
+                {
+                    // Provider not configured or error fetching voices
+                }
+            }
+        }
+    }
+
+    private async Task OnThemeChanged(string theme)
+    {
+        _selectedTheme = theme;
+        await LocalStorage.SetItemAsStringAsync(THEME_KEY, theme);
+
+        // Apply theme change
+        await JS.InvokeVoidAsync("eval", $"document.documentElement.setAttribute('data-theme', '{theme}')");
+
+        Snackbar.Add($"Theme changed to {theme}", Severity.Success);
+    }
+
+    private async Task OnDefaultProviderChanged(string providerId)
+    {
+        _defaultProviderId = providerId;
+        await ProviderManager.SetDefaultProviderAsync(providerId);
+        Snackbar.Add($"Default provider set to {_providers.First(p => p.Id == providerId).DisplayName}", Severity.Success);
+    }
+
+    private async Task OnDefaultVoiceChanged(string providerId, string voiceId)
+    {
+        _defaultVoices[providerId] = voiceId;
+        var voiceKey = $"{DEFAULT_VOICE_PREFIX}{providerId}";
+        await LocalStorage.SetItemAsStringAsync(voiceKey, voiceId);
+
+        var voiceName = _providerVoices[providerId].First(v => v.Id == voiceId).Name;
+        Snackbar.Add($"Default voice for {providerId} set to {voiceName}", Severity.Success);
+    }
+
+    private async Task ClearVoiceCache()
+    {
+        // Reload voices with cache bypass
+        foreach (var provider in _providers)
+        {
+            var ttsProvider = ProviderManager.GetProvider(provider.Id);
+            if (ttsProvider != null)
+            {
+                try
+                {
+                    await ttsProvider.GetVoicesAsync(bypassCache: true);
+                }
+                catch { }
+            }
+        }
+
+        Snackbar.Add("Voice cache cleared", Severity.Success);
+    }
+
+    private async Task ClearAllData()
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to clear ALL app data? This will remove your API keys, settings, and cached data. This action cannot be undone.");
+
+        if (confirmed)
+        {
+            await LocalStorage.ClearAsync();
+            Snackbar.Add("All app data cleared. Please refresh the page.", Severity.Warning);
+
+            // Reload settings to defaults
+            await Task.Delay(1000);
+            await JS.InvokeVoidAsync("location.reload");
+        }
+    }
+
+    private async Task ResetToDefaults()
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", "Reset all settings to defaults? API keys will be preserved.");
+
+        if (confirmed)
+        {
+            // Reset theme
+            _selectedTheme = "system";
+            await LocalStorage.SetItemAsStringAsync(THEME_KEY, "system");
+
+            // Reset default provider
+            _defaultProviderId = _providers.FirstOrDefault()?.Id;
+            if (_defaultProviderId != null)
+            {
+                await ProviderManager.SetDefaultProviderAsync(_defaultProviderId);
+            }
+
+            // Clear default voices
+            foreach (var provider in _providers)
+            {
+                var voiceKey = $"{DEFAULT_VOICE_PREFIX}{provider.Id}";
+                await LocalStorage.RemoveItemAsync(voiceKey);
+            }
+            _defaultVoices.Clear();
+
+            Snackbar.Add("Settings reset to defaults", Severity.Success);
+            StateHasChanged();
+        }
+    }
+}

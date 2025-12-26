@@ -1,0 +1,72 @@
+@inherits LayoutComponentBase
+
+<MudThemeProvider @bind-IsDarkMode="@_isDarkMode" Theme="_theme" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+        <MudText Typo="Typo.h6">Multi-Cloud TTS</MudText>
+        <MudSpacer />
+        <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
+                       Color="Color.Inherit"
+                       OnClick="@ToggleDarkMode"
+                       title="Toggle dark mode" />
+    </MudAppBar>
+
+    <MudDrawer @bind-Open="_drawerOpen" Elevation="2">
+        <MudDrawerHeader>
+            <MudText Typo="Typo.h6">Multi-Cloud TTS</MudText>
+        </MudDrawerHeader>
+        <NavMenu />
+    </MudDrawer>
+
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private bool _drawerOpen = true;
+    private bool _isDarkMode = false;
+
+    private MudTheme _theme = new()
+    {
+        PaletteLight = new PaletteLight()
+        {
+            Primary = "#7B1FA2",  // Purple
+            Secondary = "#4CAF50", // Green
+            AppbarBackground = "#7B1FA2",
+        },
+        PaletteDark = new PaletteDark()
+        {
+            Primary = "#9C27B0",
+            Secondary = "#66BB6A",
+            AppbarBackground = "#1E1E1E",
+            Background = "#121212",
+            Surface = "#1E1E1E",
+            DrawerBackground = "#1E1E1E",
+        }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Detect system preference for dark mode
+        // This would require JS interop for actual implementation
+        _isDarkMode = false;
+    }
+
+    private void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+    private void ToggleDarkMode()
+    {
+        _isDarkMode = !_isDarkMode;
+    }
+}

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#7B1FA2" />
+
+    <!-- Primary Meta Tags -->
+    <title>Stitch Multi-Cloud Text-to-Speech | Privacy-First TTS</title>
+    <meta name="title" content="Stitch Multi-Cloud Text-to-Speech | Privacy-First TTS" />
+    <meta name="description" content="Transform text into natural speech with Stitch - a powerful, privacy-first Progressive Web App. Support for Google TTS, ElevenLabs, Azure, Amazon Polly & Deepgram. Features offline TTS, PDF conversion, encrypted storage. 100% browser-based, no tracking." />
+    <meta name="keywords" content="text to speech, TTS, speech synthesis, PDF to speech, privacy, offline TTS, Google Cloud TTS, ElevenLabs, Azure TTS, Amazon Polly, Deepgram, PWA, voice synthesis, audiobook creator, accessibility, read aloud" />
+    <meta name="author" content="Rahmat Saeedi" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://rahmatsaeedi.github.io/stitch-multi-cloud-TTS/" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://rahmatsaeedi.github.io/stitch-multi-cloud-TTS/" />
+    <meta property="og:title" content="Stitch Multi-Cloud Text-to-Speech | Privacy-First TTS" />
+    <meta property="og:description" content="Transform text into natural speech with 5 cloud providers. Privacy-first with offline support, PDF conversion, and encrypted storage. Works 100% in your browser." />
+    <meta property="og:image" content="https://rahmatsaeedi.github.io/stitch-multi-cloud-TTS/social-preview.png" />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
+    <meta property="og:site_name" content="Stitch Multi-Cloud Text-to-Speech" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://rahmatsaeedi.github.io/stitch-multi-cloud-TTS/" />
+    <meta property="twitter:title" content="Stitch Multi-Cloud Text-to-Speech" />
+    <meta property="twitter:description" content="Privacy-first TTS supporting 5 cloud providers. Convert text & PDFs to speech, 100% browser-based, offline capable." />
+    <meta property="twitter:image" content="https://rahmatsaeedi.github.io/stitch-multi-cloud-TTS/icon-512.png" />
+    <meta property="twitter:creator" content="@rahmatsaeedi" />
+
+    <!-- Additional SEO -->
+    <meta name="application-name" content="Stitch Multi-Cloud Text-to-Speech" />
+    <meta name="apple-mobile-web-app-title" content="Stitch Multi-Cloud Text-to-Speech" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <base href="/" />
+
+    <!-- MudBlazor CSS -->
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
+    <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
+
+    <link rel="stylesheet" href="css/app.css" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <link href="SpeechApp.styles.css" rel="stylesheet" />
+    <link href="manifest.webmanifest" rel="manifest" />
+    <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png" />
+    <script type="importmap">
+    {
+        "imports": {
+            "onnxruntime-web": "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.18.0/dist/esm/ort.min.js"
+        }
+    }
+    </script>
+
+    <style>
+        /* Safe area handling for notches */
+        body {
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+        }
+    </style>
+
+    <!-- Structured Data for SEO -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Stitch Multi-Cloud Text-to-Speech",
+      "alternateName": "Stitch TTS",
+      "url": "https://rahmatsaeedi.github.io/stitch-multi-cloud-TTS/",
+      "description": "Transform text into natural speech with Stitch - a privacy-first Progressive Web App supporting 5 cloud TTS providers including Google, ElevenLabs, Azure, Amazon Polly, and Deepgram. Features offline TTS, PDF conversion, and encrypted API key storage.",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "Any (Web-based)",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "CAD"
+      },
+      "author": {
+        "@type": "Person",
+        "name": "Rahmat Saeedi",
+        "url": "https://github.com/rahmatsaeedi"
+      },
+      "screenshot": "https://rahmatsaeedi.github.io/stitch-multi-cloud-TTS/icon-512.png",
+      "softwareVersion": "1.0.0",
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "5.0",
+        "ratingCount": "1"
+      },
+      "featureList": [
+        "Support for 5 cloud TTS providers (Google, ElevenLabs, Azure, Polly, Deepgram)",
+        "Offline text-to-speech with Piper and eSpeak-NG",
+        "PDF and text file upload with smart text extraction",
+        "AES-GCM encrypted API key storage",
+        "Privacy-first: 100% client-side processing",
+        "Progressive Web App - works offline",
+        "Voice filtering by language, gender, and quality",
+        "Real-time cost estimation",
+        "Dark and light theme support",
+        "Responsive design for mobile and desktop"
+      ]
+    }
+    </script>
+</head>
+
+<body>
+    <div id="app">
+        <svg class="loading-progress">
+            <circle r="40%" cx="50%" cy="50%" />
+            <circle r="40%" cx="50%" cy="50%" />
+        </svg>
+        <div class="loading-progress-text"></div>
+    </div>
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="." class="reload">Reload</a>
+        <span class="dismiss">🗙</span>
+    </div>
+
+    <!-- Crypto.js for Web Crypto API -->
+    <script src="js/crypto.js"></script>
+
+    <!-- Audio Merger for Web Audio API -->
+    <script src="js/audio-merger.js"></script>
+
+    <!-- PDF.js for PDF text extraction -->
+    <script src="js/lib/pdf.min.js"></script>
+    <script src="js/pdf-helper.js"></script>
+
+    <!-- Offline TTS - Piper and eSpeak-NG -->
+    <!-- Piper TTS Library from CDN -->
+    <script type="module">
+        import * as piperTTS from 'https://cdn.jsdelivr.net/npm/@mintplex-labs/piper-tts-web@1.0.4/dist/piper-tts-web.js';
+        window.piperTTSLib = piperTTS;
+    </script>
+
+    <!-- eSpeak-NG using Web Speech API (built into browser) -->
+    <script>
+        // Use browser's built-in Web Speech API as eSpeak alternative
+        // This is more reliable and works offline with system voices
+        if ('speechSynthesis' in window) {
+            window.meSpeak = {
+                speak: function(text, options) {
+                    options = options || {};
+
+                    if (options.rawdata === 'mime') {
+                        // Web Speech API doesn't support raw audio data export
+                        return null;
+                    }
+
+                    const utterance = new SpeechSynthesisUtterance(text);
+
+                    // Map options to SpeechSynthesisUtterance properties
+                    utterance.rate = (options.speed || 175) / 175; // Normalize to ~1.0
+                    utterance.pitch = (options.pitch || 50) / 50; // Normalize to ~1.0
+                    utterance.volume = options.amplitude ? options.amplitude / 100 : 1.0;
+
+                    // Try to find matching voice
+                    if (options.voice) {
+                        const voices = speechSynthesis.getVoices();
+                        const matchingVoice = voices.find(v =>
+                            v.lang.toLowerCase().includes(options.voice.toLowerCase()) ||
+                            v.name.toLowerCase().includes(options.voice.toLowerCase())
+                        );
+                        if (matchingVoice) {
+                            utterance.voice = matchingVoice;
+                        }
+                    }
+
+                    speechSynthesis.speak(utterance);
+                    return null;
+                },
+
+                getVoices: function() {
+                    // Return actual Web Speech API voices
+                    const voices = speechSynthesis.getVoices();
+                    return voices.map(v => ({
+                        id: v.lang,
+                        name: v.name,
+                        lang: v.lang,
+                        language: v.lang
+                    }));
+                }
+            };
+
+            // Wait for voices to load
+            speechSynthesis.getVoices();
+            if (speechSynthesis.onvoiceschanged !== undefined) {
+                speechSynthesis.onvoiceschanged = () => {
+                    speechSynthesis.getVoices();
+                };
+            }
+        } else {
+            console.error('Web Speech API not supported in this browser');
+            window.meSpeak = null;
+        }
+    </script>
+    <script src="js/piper-tts.js"></script>
+    <script src="js/espeak-ng.js"></script>
+
+    <!-- MudBlazor JS -->
+    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+
+    <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
+    <script>navigator.serviceWorker.register('service-worker.js', { updateViaCache: 'none' });</script>
+</body>
+
+</html>

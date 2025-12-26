@@ -1,0 +1,220 @@
+@using SpeechApp.Services.Interfaces
+@inject IErrorLoggingService ErrorLogging
+
+<MudPaper Elevation="2" Class="pa-4">
+    <div class="d-flex justify-space-between align-center mb-4">
+        <MudText Typo="Typo.h6">Error Log</MudText>
+        <div class="d-flex gap-2">
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Default"
+                       Size="Size.Small"
+                       OnClick="RefreshLogs"
+                       StartIcon="@Icons.Material.Filled.Refresh">
+                Refresh
+            </MudButton>
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Error"
+                       Size="Size.Small"
+                       OnClick="ClearLogs"
+                       StartIcon="@Icons.Material.Filled.Delete"
+                       Disabled="_errorLogs.Count == 0">
+                Clear All
+            </MudButton>
+        </div>
+    </div>
+
+    @if (_isLoading)
+    {
+        <div class="d-flex justify-center pa-6">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+        </div>
+    }
+    else if (_errorLogs.Count == 0)
+    {
+        <MudAlert Severity="Severity.Success">
+            <MudText>No errors logged. Everything is working smoothly!</MudText>
+        </MudAlert>
+    }
+    else
+    {
+        <MudTable Items="_errorLogs" Hover="true" Breakpoint="Breakpoint.Sm" Dense="true">
+            <HeaderContent>
+                <MudTh>Time</MudTh>
+                <MudTh>Severity</MudTh>
+                <MudTh>Component</MudTh>
+                <MudTh>Message</MudTh>
+                <MudTh>Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Time">
+                    <MudText Typo="Typo.body2">@context.Timestamp.ToLocalTime().ToString("MM/dd HH:mm:ss")</MudText>
+                </MudTd>
+                <MudTd DataLabel="Severity">
+                    <MudChip T="string" Size="Size.Small" Color="GetSeverityColor(context.Severity)">
+                        @context.Severity
+                    </MudChip>
+                </MudTd>
+                <MudTd DataLabel="Component">
+                    <MudText Typo="Typo.body2">@(context.Component ?? "Unknown")</MudText>
+                    @if (!string.IsNullOrEmpty(context.ProviderId))
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">@context.ProviderId</MudText>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Message">
+                    <MudText Typo="Typo.body2" Style="max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        @context.Message
+                    </MudText>
+                </MudTd>
+                <MudTd DataLabel="Actions">
+                    <MudIconButton Icon="@Icons.Material.Filled.Info"
+                                   Size="Size.Small"
+                                   Color="Color.Primary"
+                                   OnClick="@(() => ShowDetails(context))" />
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+
+        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
+            Showing @_errorLogs.Count most recent errors (max 50)
+        </MudText>
+    }
+</MudPaper>
+
+<MudDialog @bind-Visible="_showDetailsDialog" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Info" Class="mr-2" />
+            Error Details
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (_selectedError != null)
+        {
+            <MudStack Spacing="3">
+                <div>
+                    <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Timestamp</MudText>
+                    <MudText Typo="Typo.body1">@_selectedError.Timestamp.ToLocalTime().ToString("F")</MudText>
+                </div>
+
+                <div>
+                    <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Severity</MudText>
+                    <MudChip T="string" Color="GetSeverityColor(_selectedError.Severity)">@_selectedError.Severity</MudChip>
+                </div>
+
+                @if (!string.IsNullOrEmpty(_selectedError.Component))
+                {
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Component</MudText>
+                        <MudText Typo="Typo.body1">@_selectedError.Component</MudText>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(_selectedError.ProviderId))
+                {
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Provider</MudText>
+                        <MudText Typo="Typo.body1">@_selectedError.ProviderId</MudText>
+                    </div>
+                }
+
+                <div>
+                    <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Message</MudText>
+                    <MudText Typo="Typo.body1">@_selectedError.Message</MudText>
+                </div>
+
+                @if (!string.IsNullOrEmpty(_selectedError.StackTrace))
+                {
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Stack Trace</MudText>
+                        <MudPaper Elevation="0" Class="pa-3" Style="background-color: var(--mud-palette-background-grey); max-height: 300px; overflow-y: auto;">
+                            <MudText Typo="Typo.body2" Style="font-family: monospace; font-size: 0.75rem; white-space: pre-wrap;">@_selectedError.StackTrace</MudText>
+                        </MudPaper>
+                    </div>
+                }
+
+                @if (_selectedError.AdditionalData != null && _selectedError.AdditionalData.Any())
+                {
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Additional Data</MudText>
+                        <MudPaper Elevation="0" Class="pa-3" Style="background-color: var(--mud-palette-background-grey);">
+                            @foreach (var kvp in _selectedError.AdditionalData)
+                            {
+                                <MudText Typo="Typo.body2">
+                                    <strong>@kvp.Key:</strong> @kvp.Value
+                                </MudText>
+                            }
+                        </MudPaper>
+                    </div>
+                }
+            </MudStack>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseDetailsDialog" Color="Color.Primary">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter]
+    public int MaxErrors { get; set; } = 50;
+
+    private List<ErrorLog> _errorLogs = new();
+    private bool _isLoading = true;
+    private bool _showDetailsDialog = false;
+    private ErrorLog? _selectedError;
+
+    private DialogOptions _dialogOptions = new()
+    {
+        MaxWidth = MaxWidth.Medium,
+        FullWidth = true
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshLogs();
+    }
+
+    private async Task RefreshLogs()
+    {
+        _isLoading = true;
+        try
+        {
+            _errorLogs = await ErrorLogging.GetRecentErrorsAsync(MaxErrors);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task ClearLogs()
+    {
+        await ErrorLogging.ClearErrorsAsync();
+        _errorLogs.Clear();
+    }
+
+    private void ShowDetails(ErrorLog error)
+    {
+        _selectedError = error;
+        _showDetailsDialog = true;
+    }
+
+    private void CloseDetailsDialog()
+    {
+        _showDetailsDialog = false;
+        _selectedError = null;
+    }
+
+    private Color GetSeverityColor(ErrorSeverity severity)
+    {
+        return severity switch
+        {
+            ErrorSeverity.Info => Color.Info,
+            ErrorSeverity.Warning => Color.Warning,
+            ErrorSeverity.Error => Color.Error,
+            ErrorSeverity.Critical => Color.Error,
+            _ => Color.Default
+        };
+    }
+}
