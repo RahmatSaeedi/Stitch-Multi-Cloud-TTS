@@ -7,6 +7,7 @@
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject IJSRuntime JS
 
 <PageTitle>Stitch Multi-Cloud TTS - Home</PageTitle>
 
@@ -287,8 +288,17 @@ else
                     <MudButton Variant="Variant.Outlined"
                                Color="Color.Primary"
                                OnClick="DownloadAudio"
-                               StartIcon="@Icons.Material.Filled.Download">
-                        Download Audio
+                               StartIcon="@Icons.Material.Filled.Download"
+                               Class="mr-2">
+                        Download
+                    </MudButton>
+
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Success"
+                               OnClick="ShareAudio"
+                               StartIcon="@Icons.Material.Filled.Share"
+                               Disabled="@(!_isShareSupported)">
+                        Share
                     </MudButton>
 
                     <MudText Typo="Typo.caption" Class="mt-2">
@@ -308,6 +318,7 @@ else
     private bool _isLoadingVoices = false;
     private bool _hasAnyApiKey = false;
     private bool _isFirstTimeSetup = true;
+    private bool _isShareSupported = false;
     private bool _passwordError = false;
     private string _passwordErrorMessage = string.Empty;
     private string _masterPassword = string.Empty;
@@ -360,6 +371,16 @@ else
 
         if (firstRender && _isEncryptionInitialized)
         {
+            // Check if Web Share API is supported
+            try
+            {
+                _isShareSupported = await JS.InvokeAsync<bool>("audioShare.isShareSupported");
+            }
+            catch
+            {
+                _isShareSupported = false;
+            }
+
             // Check if Piper models were updated (e.g., downloaded on Offline page)
             var currentUpdate = await StorageService.GetPreferenceAsync<string>("piper_models_updated");
 
@@ -730,6 +751,39 @@ else
         {
             var filename = $"tts-{DateTime.Now:yyyyMMdd-HHmmss}.{(_audioMimeType.Contains("wav") ? "wav" : "mp3")}";
             await audioService.DownloadAudioAsync(_audioData, filename, _audioMimeType);
+        }
+    }
+
+    private async Task ShareAudio()
+    {
+        if (_audioData == null)
+            return;
+
+        try
+        {
+            var base64Audio = Convert.ToBase64String(_audioData);
+            var filename = $"speech-{DateTime.Now:yyyyMMdd-HHmmss}.{(_audioMimeType.Contains("wav") ? "wav" : "mp3")}";
+            var shareText = !string.IsNullOrEmpty(_inputText) && _inputText.Length <= 100
+                ? _inputText
+                : "Listen to this synthesized speech";
+
+            var success = await JS.InvokeAsync<bool>(
+                "audioShare.shareAudio",
+                base64Audio,
+                _audioMimeType,
+                filename,
+                shareText
+            );
+
+            if (success)
+            {
+                Snackbar.Add("Audio shared successfully!", Severity.Success);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Share failed: {ex.Message}");
+            // Silently fail - user might have cancelled
         }
     }
 

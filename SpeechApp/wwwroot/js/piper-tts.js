@@ -24,11 +24,8 @@ window.piperTTS = {
         if (this.isInitialized) return true;
 
         try {
-            console.log('🔧 Initializing Piper TTS...');
-
             // Open IndexedDB for model storage
             this.db = await this.openDatabase();
-            console.log('✅ IndexedDB opened');
 
             // Wait for Piper library to be available (with retry)
             let retries = 0;
@@ -39,31 +36,21 @@ window.piperTTS = {
 
             if (typeof window.piperTTSLib !== 'undefined') {
                 piperLib = window.piperTTSLib;
-                console.log('✅ Piper library loaded:', piperLib);
-                console.log('Available Piper methods:', Object.keys(piperLib));
 
-                // Check if library has required methods
-                if (typeof piperLib.download === 'function') {
-                    console.log('✅ Piper download method available');
-                } else {
-                    console.warn('⚠️ Piper download method not found');
-                }
-
-                if (typeof piperLib.predict === 'function') {
-                    console.log('✅ Piper predict method available');
-                } else {
-                    console.warn('⚠️ Piper predict method not found');
+                // Verify required methods exist
+                if (typeof piperLib.download !== 'function' || typeof piperLib.predict !== 'function') {
+                    console.error('Piper TTS library missing required methods');
+                    return false;
                 }
             } else {
-                console.error('❌ Piper TTS library not loaded from CDN');
-                console.log('Please check network connectivity and CDN availability');
+                console.error('Piper TTS library not loaded');
+                return false;
             }
 
             this.isInitialized = true;
             return true;
         } catch (error) {
-            console.error('❌ Failed to initialize Piper TTS:', error);
-            console.error('Stack:', error.stack);
+            console.error('Failed to initialize Piper TTS:', error.message);
             return false;
         }
     },
@@ -144,109 +131,53 @@ window.piperTTS = {
         try {
             // Ensure initialized
             if (!this.isInitialized) {
-                console.log('Piper not initialized, initializing now...');
                 await this.init();
             }
 
-            console.log('🔽 Download requested for model:', modelId);
-            console.log('Piper library loaded:', !!piperLib);
-            console.log('Piper library type:', typeof piperLib);
-            console.log('Piper library has download:', piperLib && typeof piperLib.download);
-
-            if (!piperLib) {
-                const errorMsg = 'Piper TTS library not loaded. Check if CDN is accessible and library initialized.';
-                console.error('❌', errorMsg);
-                throw new Error(errorMsg);
+            if (!piperLib || typeof piperLib.download !== 'function') {
+                throw new Error('Piper TTS library not available');
             }
 
-            if (typeof piperLib.download !== 'function') {
-                const errorMsg = 'Piper library loaded but download method not available';
-                console.error('❌', errorMsg);
-                console.log('Available methods:', Object.keys(piperLib));
-                throw new Error(errorMsg);
-            }
-
-            // Get available voices from library
-            let availableVoices = [];
+            // Get available voices to find the correct model ID
+            let actualModelId = modelId;
             try {
-                // Check if voices is a property or function
-                if (typeof piperLib.voices === 'function') {
-                    console.log('Calling piperLib.voices()...');
-                    availableVoices = await piperLib.voices();
-                } else if (Array.isArray(piperLib.voices)) {
-                    console.log('Using piperLib.voices array...');
-                    availableVoices = piperLib.voices;
-                } else {
-                    console.log('piperLib.voices type:', typeof piperLib.voices);
-                }
+                const availableVoices = typeof piperLib.voices === 'function'
+                    ? await piperLib.voices()
+                    : piperLib.voices;
 
                 if (availableVoices && availableVoices.length > 0) {
-                    console.log('📋 Available voices from library:', availableVoices.slice(0, 5)); // Show first 5
-                    console.log('Total voices:', availableVoices.length);
-                } else {
-                    console.warn('⚠️ No voices returned from library');
+                    const voiceMatch = availableVoices.find(v =>
+                        v.key === modelId || v.name === modelId || v.id === modelId
+                    );
+                    if (voiceMatch) {
+                        actualModelId = voiceMatch.key || voiceMatch.id || modelId;
+                    }
                 }
             } catch (voicesError) {
-                console.warn('⚠️ Error getting voices:', voicesError);
+                // Continue with provided modelId if voice lookup fails
             }
 
-            // Check if the modelId is in the available voices
-            let actualModelId = modelId;
-            if (availableVoices && availableVoices.length > 0) {
-                const voiceMatch = availableVoices.find(v =>
-                    v.key === modelId ||
-                    v.name === modelId ||
-                    v.id === modelId
-                );
+            // Download with progress tracking
+            await piperLib.download(actualModelId, (progress) => {
+                const percentage = progress.total > 0
+                    ? Math.round((progress.loaded * 100) / progress.total)
+                    : 0;
 
-                if (voiceMatch) {
-                    console.log('✅ Found matching voice:', voiceMatch);
-                    actualModelId = voiceMatch.key || voiceMatch.id || modelId;
-                } else {
-                    console.warn('⚠️ Model ID not found in library voices');
-                    console.log('Requested:', modelId);
-                    console.log('Available keys:', availableVoices.slice(0, 10).map(v => v.key || v.id || v.name));
-                }
-            }
-
-            console.log('📥 Starting download for model:', actualModelId);
-
-            // Use Piper library's download with progress tracking
-            // The download function will throw on error
-            try {
-                await piperLib.download(actualModelId, (progress) => {
-                    // Progress object has loaded and total properties
-                    const percentage = progress.total > 0
-                        ? Math.round((progress.loaded * 100) / progress.total)
-                        : 0;
-
-                    console.log(`Download progress: ${percentage}%`);
-
-                    if (progressCallback) {
-                        try {
-                            progressCallback.invokeMethodAsync('Invoke', percentage);
-                        } catch (callbackError) {
-                            console.warn('Progress callback error:', callbackError);
-                        }
+                if (progressCallback) {
+                    try {
+                        progressCallback.invokeMethodAsync('Invoke', percentage);
+                    } catch (callbackError) {
+                        // Silently ignore callback errors
                     }
-                });
+                }
+            });
 
-                console.log('✅ Download completed, storing metadata');
+            // Store metadata in our IndexedDB
+            await this.storeModel(actualModelId, new ArrayBuffer(0));
 
-                // Store metadata in our IndexedDB
-                await this.storeModel(actualModelId, new ArrayBuffer(0));
-
-                console.log('✅ Model downloaded successfully:', actualModelId);
-                return true;
-            } catch (downloadError) {
-                console.error('❌ Download failed:', downloadError);
-                console.error('Download error message:', downloadError.message);
-                console.error('Download error stack:', downloadError.stack);
-                throw downloadError; // Re-throw to be caught by outer try-catch
-            }
+            return true;
         } catch (error) {
-            console.error('❌ Piper download error:', error);
-            console.error('Error stack:', error.stack);
+            console.error('Piper download failed:', error.message);
             return false;
         }
     },
@@ -283,10 +214,7 @@ window.piperTTS = {
      */
     async getDownloadedModels() {
         try {
-            console.log('📋 Getting downloaded models...');
-
             if (!piperLib) {
-                console.log('Piper library not loaded, using IndexedDB fallback');
                 // Fallback to IndexedDB if library not loaded
                 if (!this.db) {
                     await this.init();
@@ -297,41 +225,25 @@ window.piperTTS = {
                 const request = store.getAllKeys();
 
                 const keys = await this.promisifyRequest(request);
-                console.log('Downloaded models from IndexedDB:', keys);
                 return keys || [];
             }
 
-            // Use Piper library's stored() method to get actually downloaded models
-            console.log('Calling piperLib.stored()...');
+            // Use Piper library's stored() method
             const storedModels = await piperLib.stored();
-            console.log('Stored models from Piper library:', storedModels);
-            console.log('Type:', typeof storedModels);
-            console.log('Is array:', Array.isArray(storedModels));
 
             // Ensure we always return an array of strings
-            if (!storedModels) {
-                console.warn('⚠️ piperLib.stored() returned null/undefined');
-                return [];
-            }
-
-            if (!Array.isArray(storedModels)) {
-                console.warn('⚠️ piperLib.stored() did not return array:', storedModels);
+            if (!storedModels || !Array.isArray(storedModels)) {
                 return [];
             }
 
             // If array contains objects, extract the IDs
             if (storedModels.length > 0 && typeof storedModels[0] === 'object') {
-                console.log('Converting objects to string IDs');
-                const ids = storedModels.map(m => m.key || m.id || m.name || String(m));
-                console.log('Model IDs:', ids);
-                return ids;
+                return storedModels.map(m => m.key || m.id || m.name || String(m));
             }
 
-            console.log('Returning model IDs:', storedModels);
             return storedModels;
         } catch (error) {
-            console.error('❌ Error getting downloaded models:', error);
-            console.error('Stack:', error.stack);
+            console.error('Error getting downloaded models:', error.message);
             return [];
         }
     },
@@ -437,14 +349,6 @@ window.piperTTS = {
             }
 
             const voices = await piperLib.voices();
-            console.log(`📋 Retrieved ${voices.length} available Piper voices`);
-
-            // Log first voice to see structure
-            if (voices.length > 0) {
-                console.log('Sample voice structure:', voices[0]);
-                console.log('Language property type:', typeof voices[0].language);
-                console.log('Language property value:', voices[0].language);
-            }
 
             // Transform to our format
             return voices.map(v => {
@@ -454,15 +358,16 @@ window.piperTTS = {
 
                 if (v.language) {
                     if (typeof v.language === 'string') {
-                        // If it's already a string, use it
                         languageName = v.language;
                         languageCode = v.language;
                     } else if (typeof v.language === 'object') {
-                        // Extract from language object
                         languageName = v.language.name_english || v.language.name_native || v.language.family || 'Unknown';
                         languageCode = v.language.code || v.language.family || 'unknown';
                     }
                 }
+
+                // Extract file size - Piper library provides size in bytes as a number
+                const sizeBytes = typeof v.size === 'number' ? v.size : (parseInt(v.size) || 0);
 
                 return {
                     id: v.key,
@@ -471,13 +376,11 @@ window.piperTTS = {
                     languageCode: languageCode,
                     gender: 'NEUTRAL', // Piper doesn't provide gender info
                     quality: this.extractQuality(v.key),
-                    sizeBytes: v.size || 0
+                    sizeBytes: sizeBytes
                 };
             });
         } catch (error) {
-            console.error('❌ Error getting available voices:', error);
-            console.error('Error details:', error.message);
-            console.error('Stack:', error.stack);
+            console.error('Error loading Piper voices:', error.message);
             return [];
         }
     },
