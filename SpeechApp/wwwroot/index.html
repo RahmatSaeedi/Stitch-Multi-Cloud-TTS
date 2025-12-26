@@ -156,21 +156,52 @@
         window.piperTTSLib = piperTTS;
     </script>
 
-    <!-- eSpeak-NG using speak.js library -->
-    <!-- speak.js - A JavaScript port of eSpeak text-to-speech synthesizer -->
-    <!-- Note: eSpeak-NG is currently disabled due to library compatibility issues -->
-    <!-- Piper TTS provides better quality offline synthesis -->
+    <!-- eSpeak-NG using meSpeak.js library -->
+    <!-- meSpeak.js - A JavaScript port of eSpeak that can export WAV files -->
     <script>
-        // eSpeak-NG temporarily disabled - using Piper TTS as primary offline provider
-        // The meSpeak.js library from masswerk.at is no longer exposing a global object
-        // and alternative CDNs for speak.js have similar issues
-        // Future: Consider bundling speak.js directly or using a maintained alternative
-        console.log('ℹ️ eSpeak-NG offline TTS is temporarily disabled');
-        console.log('ℹ️ Use Piper TTS for high-quality offline speech synthesis');
-        console.log('ℹ️ Piper supports 124 voices across 50+ languages');
+        // Load meSpeak library and configure it
+        (function() {
+            const script = document.createElement('script');
+            script.src = 'https://www.masswerk.at/mespeak/mespeak.js';
+            script.async = true;
 
-        // Set a flag so espeak-ng.js knows not to initialize
-        window.espeakDisabled = true;
+            script.onload = async function() {
+                console.log('✅ meSpeak.js script loaded');
+
+                if (typeof window.meSpeak !== 'undefined') {
+                    try {
+                        console.log('🔧 Initializing meSpeak library...');
+
+                        // Load default config
+                        await new Promise((resolve) => {
+                            meSpeak.loadConfig('https://www.masswerk.at/mespeak/mespeak_config.json');
+                            setTimeout(resolve, 500);
+                        });
+                        console.log('✅ meSpeak config loaded');
+
+                        // Load default English voice
+                        await new Promise((resolve) => {
+                            meSpeak.loadVoice('https://www.masswerk.at/mespeak/voices/en/en-us.json');
+                            setTimeout(resolve, 500);
+                        });
+                        console.log('✅ meSpeak voice loaded');
+
+                        console.log('✅ meSpeak initialized successfully');
+                    } catch (error) {
+                        console.error('❌ Error loading meSpeak:', error);
+                    }
+                } else {
+                    console.error('❌ meSpeak library loaded but window.meSpeak is undefined');
+                }
+            };
+
+            script.onerror = function() {
+                console.error('❌ Failed to load meSpeak.js from CDN');
+                console.log('Check network connectivity and CDN availability: https://www.masswerk.at/mespeak/');
+            };
+
+            document.head.appendChild(script);
+        })();
     </script>
     <script src="js/piper-tts.js"></script>
     <script src="js/espeak-ng.js"></script>

@@ -18,12 +18,6 @@ window.espeakNG = {
      * Initialize eSpeak-NG
      */
     async initialize() {
-        // Check if eSpeak has been disabled
-        if (window.espeakDisabled) {
-            console.log('ℹ️ eSpeak-NG is disabled - using Piper TTS for offline synthesis');
-            return false;
-        }
-
         if (this._isInitialized) {
             console.log('ℹ️ eSpeak-NG already initialized');
             return true;
@@ -105,7 +99,7 @@ window.espeakNG = {
 
         try {
             // Check if eSpeak library is available
-            if (!espeakLib || typeof espeakLib.getWav !== 'function') {
+            if (!espeakLib || typeof espeakLib.speak !== 'function') {
                 console.warn('meSpeak library not available, using fallback');
                 return this.generateTestBeep(1.0);
             }
@@ -115,7 +109,8 @@ window.espeakNG = {
             let voiceOptions = {
                 speed: speed,
                 pitch: pitch,
-                wordgap: 0
+                wordgap: 0,
+                rawdata: 'base64' // Request base64 encoded WAV data instead of playing
             };
 
             // If voice includes variant (e.g., "en-us"), set it
@@ -124,16 +119,17 @@ window.espeakNG = {
                 voiceOptions.variant = parts[1];
             }
 
-            // Use meSpeak.getWav() to generate WAV file instead of playing
-            const wavData = espeakLib.getWav(text, voiceOptions);
+            // Use meSpeak.speak() with rawdata option to get WAV data without playing
+            // When rawdata is set, meSpeak returns the data directly instead of playing
+            const wavData = espeakLib.speak(text, voiceOptions);
 
             if (!wavData) {
-                console.error('meSpeak.getWav returned null');
+                console.error('meSpeak.speak returned null or empty data');
                 return this.generateTestBeep(1.0);
             }
 
-            // Convert Uint8Array to base64
-            return this.arrayBufferToBase64(wavData.buffer);
+            // meSpeak returns base64 encoded WAV when rawdata: 'base64' is set
+            return wavData;
 
         } catch (error) {
             console.error('eSpeak synthesis error:', error);
