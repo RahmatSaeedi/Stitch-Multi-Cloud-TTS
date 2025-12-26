@@ -5,17 +5,16 @@
 @inject ISnackbar Snackbar
 @inject IJSRuntime JS
 @inject PiperTTSService PiperService
-@inject ESpeakNGService ESpeakService
 
 <PageTitle>Offline Mode - Stitch TTS</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4 mb-8">
     <MudText Typo="Typo.h4" Class="mb-2">
         <MudIcon Icon="@Icons.Material.Filled.CloudOff" Class="mr-2" />
-        Offline Text-to-Speech
+        Offline Text-to-Speech - Piper TTS
     </MudText>
     <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-6">
-        Download voice models for offline speech synthesis. Works without internet after installation.
+        Download high-quality neural voice models for offline speech synthesis. Works without internet after installation.
     </MudText>
 
     <!-- Storage Quota Display -->
@@ -111,68 +110,6 @@
             }
         </MudTabPanel>
 
-        <!-- eSpeak-NG Tab -->
-        <MudTabPanel Text="eSpeak-NG" Icon="@Icons.Material.Filled.Language">
-            <MudText Typo="Typo.h6" Class="mb-3">
-                <MudIcon Icon="@Icons.Material.Filled.Public" Color="Color.Info" Size="Size.Small" Class="mr-1" />
-                eSpeak-NG - Lightweight Multilingual TTS
-            </MudText>
-            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
-                Compact synthesizer supporting 127+ languages. Only ~5 MB total. Pre-bundled and ready to use.
-            </MudText>
-
-            <MudAlert Severity="Severity.Success" Class="mb-4">
-                eSpeak-NG is pre-installed and ready to use! No downloads needed. Select eSpeak voices on the Home page to use offline synthesis.
-            </MudAlert>
-
-            <MudCard Outlined="true">
-                <MudCardHeader>
-                    <CardHeaderContent>
-                        <MudText Typo="Typo.h6">eSpeak-NG Core Package</MudText>
-                    </CardHeaderContent>
-                </MudCardHeader>
-                <MudCardContent>
-                    <MudGrid>
-                        <MudItem xs="12" sm="4">
-                            <MudText Typo="Typo.body2">
-                                <strong>Status:</strong>
-                                <MudChip T="string" Size="Size.Small" Color="Color.Success">Active</MudChip>
-                            </MudText>
-                        </MudItem>
-                        <MudItem xs="12" sm="4">
-                            <MudText Typo="Typo.body2">
-                                <strong>Size:</strong> ~5 MB
-                            </MudText>
-                        </MudItem>
-                        <MudItem xs="12" sm="4">
-                            <MudText Typo="Typo.body2">
-                                <strong>Languages:</strong> 127+
-                            </MudText>
-                        </MudItem>
-                    </MudGrid>
-
-                    <MudDivider Class="my-3" />
-
-                    <MudText Typo="Typo.subtitle2" Class="mb-2">Supported Languages (Sample):</MudText>
-                    <MudChipSet T="string">
-                        <MudChip T="string" Size="Size.Small">English</MudChip>
-                        <MudChip T="string" Size="Size.Small">Spanish</MudChip>
-                        <MudChip T="string" Size="Size.Small">French</MudChip>
-                        <MudChip T="string" Size="Size.Small">German</MudChip>
-                        <MudChip T="string" Size="Size.Small">Italian</MudChip>
-                        <MudChip T="string" Size="Size.Small">Portuguese</MudChip>
-                        <MudChip T="string" Size="Size.Small">Russian</MudChip>
-                        <MudChip T="string" Size="Size.Small">Chinese</MudChip>
-                        <MudChip T="string" Size="Size.Small">Japanese</MudChip>
-                        <MudChip T="string" Size="Size.Small">Korean</MudChip>
-                        <MudChip T="string" Size="Size.Small">Arabic</MudChip>
-                        <MudChip T="string" Size="Size.Small">Hindi</MudChip>
-                        <MudChip T="string" Size="Size.Small">+115 more...</MudChip>
-                    </MudChipSet>
-                </MudCardContent>
-            </MudCard>
-        </MudTabPanel>
-
         <!-- Help Tab -->
         <MudTabPanel Text="Help & Info" Icon="@Icons.Material.Filled.Help">
             <MudText Typo="Typo.h6" Class="mb-3">About Offline TTS</MudText>
@@ -180,29 +117,21 @@
             <MudExpansionPanels MultiExpansion="true">
                 <MudExpansionPanel Text="How does offline TTS work?">
                     <MudText Typo="Typo.body2">
-                        Offline TTS uses WebAssembly-compiled speech engines that run entirely in your browser.
+                        Offline TTS uses Piper, a high-quality neural TTS engine compiled to WebAssembly that runs entirely in your browser.
                         Voice models are downloaded once and stored in your browser's IndexedDB. After download,
                         synthesis happens locally without any internet connection.
                     </MudText>
                 </MudExpansionPanel>
 
-                <MudExpansionPanel Text="Piper vs eSpeak-NG: Which should I use?">
+                <MudExpansionPanel Text="About Piper TTS">
                     <MudText Typo="Typo.body2" Class="mb-2">
-                        <strong>Use Piper if:</strong>
+                        Piper provides high-quality neural voices with natural prosody. Each voice model is 50-120 MB and supports:
                     </MudText>
                     <MudList T="string" Dense="true">
-                        <MudListItem T="string" Icon="@Icons.Material.Filled.Check">You want the highest quality offline voices</MudListItem>
-                        <MudListItem T="string" Icon="@Icons.Material.Filled.Check">You have 50-120 MB storage per language</MudListItem>
-                        <MudListItem T="string" Icon="@Icons.Material.Filled.Check">You primarily use 1-3 languages</MudListItem>
-                    </MudList>
-
-                    <MudText Typo="Typo.body2" Class="mb-2 mt-3">
-                        <strong>Use eSpeak-NG if:</strong>
-                    </MudText>
-                    <MudList T="string" Dense="true">
-                        <MudListItem T="string" Icon="@Icons.Material.Filled.Check">You need many languages (127+)</MudListItem>
-                        <MudListItem T="string" Icon="@Icons.Material.Filled.Check">You have limited storage space</MudListItem>
-                        <MudListItem T="string" Icon="@Icons.Material.Filled.Check">You want instant availability (no downloads)</MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Check">Natural-sounding speech with good prosody</MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Check">124 voices across 50+ languages</MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Check">Multiple quality levels (low, medium, high)</MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Check">Completely offline operation after download</MudListItem>
                     </MudList>
                 </MudExpansionPanel>
 

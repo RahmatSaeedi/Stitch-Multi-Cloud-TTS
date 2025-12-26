@@ -107,7 +107,7 @@
       },
       "featureList": [
         "Support for 5 cloud TTS providers (Google, ElevenLabs, Azure, Polly, Deepgram)",
-        "Offline text-to-speech with Piper and eSpeak-NG",
+        "Offline text-to-speech with Piper TTS",
         "PDF and text file upload with smart text extraction",
         "AES-GCM encrypted API key storage",
         "Privacy-first: 100% client-side processing",
@@ -149,53 +149,15 @@
     <script src="js/lib/pdf.min.js"></script>
     <script src="js/pdf-helper.js"></script>
 
-    <!-- Offline TTS - Piper and eSpeak-NG -->
+    <!-- Offline TTS - Piper TTS -->
     <!-- Piper TTS Library from CDN -->
     <script type="module">
         import * as piperTTS from 'https://cdn.jsdelivr.net/npm/@mintplex-labs/piper-tts-web@1.0.4/dist/piper-tts-web.js';
         window.piperTTSLib = piperTTS;
     </script>
 
-    <!-- eSpeak-NG using meSpeak.js library -->
-    <!-- meSpeak.js - A JavaScript port of eSpeak that can export WAV files -->
-    <!-- Served locally to avoid CDN blocking and tracking prevention -->
-    <script src="js/lib/mespeak/mespeak.js"></script>
-    <script>
-        // Configure meSpeak after it loads
-        (async function() {
-            // Wait a moment for the library to fully initialize
-            await new Promise(resolve => setTimeout(resolve, 100));
-
-            if (typeof window.meSpeak !== 'undefined' && window.meSpeak !== null) {
-                try {
-                    console.log('🔧 Initializing meSpeak library...');
-
-                    // Load config from local files
-                    await new Promise((resolve) => {
-                        window.meSpeak.loadConfig('js/lib/mespeak/mespeak_config.json');
-                        setTimeout(resolve, 500);
-                    });
-                    console.log('✅ meSpeak config loaded');
-
-                    // Load default English voice from local files
-                    await new Promise((resolve) => {
-                        window.meSpeak.loadVoice('js/lib/mespeak/voices/en/en-us.json');
-                        setTimeout(resolve, 500);
-                    });
-                    console.log('✅ meSpeak voice loaded');
-
-                    console.log('✅ meSpeak initialized successfully');
-                } catch (error) {
-                    console.error('❌ Error loading meSpeak:', error);
-                }
-            } else {
-                console.warn('⚠️ meSpeak library not available. eSpeak-NG will be disabled.');
-                console.log('Falling back to Piper TTS for offline synthesis.');
-            }
-        })();
-    </script>
+    <!-- Piper TTS - Offline high-quality speech synthesis -->
     <script src="js/piper-tts.js"></script>
-    <script src="js/espeak-ng.js"></script>
 
     <!-- MudBlazor JS -->
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>

@@ -47,7 +47,6 @@ builder.Services.AddScoped<AmazonPollyProvider>();
 
 // TTS Providers (Offline)
 builder.Services.AddScoped<SpeechApp.Services.Offline.PiperTTSService>();
-builder.Services.AddScoped<SpeechApp.Services.Offline.ESpeakNGService>();
 
 // Provider Manager
 builder.Services.AddScoped<ITTSProviderManager, TTSProviderManager>();

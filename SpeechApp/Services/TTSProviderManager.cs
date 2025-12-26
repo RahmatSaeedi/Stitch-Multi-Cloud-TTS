@@ -18,8 +18,7 @@ public class TTSProviderManager : ITTSProviderManager
         DeepgramProvider deepgramProvider,
         AzureTTSProvider azureProvider,
         AmazonPollyProvider pollyProvider,
-        PiperTTSService piperProvider,
-        ESpeakNGService espeakProvider)
+        PiperTTSService piperProvider)
     {
         _storageService = storageService;
 
@@ -31,8 +30,7 @@ public class TTSProviderManager : ITTSProviderManager
             ["deepgram"] = deepgramProvider,
             ["azure"] = azureProvider,
             ["polly"] = pollyProvider,
-            ["piper"] = piperProvider,
-            ["espeak"] = espeakProvider
+            ["piper"] = piperProvider
         };
     }
 
@@ -59,8 +57,8 @@ public class TTSProviderManager : ITTSProviderManager
             return _providers[defaultProviderId];
         }
 
-        // Return first provider if no default set
-        return _providers.Values.FirstOrDefault();
+        // Default to Piper (offline TTS) if no preference set
+        return _providers.ContainsKey("piper") ? _providers["piper"] : _providers.Values.FirstOrDefault();
     }
 
     public async Task SetDefaultProviderAsync(string providerId)
