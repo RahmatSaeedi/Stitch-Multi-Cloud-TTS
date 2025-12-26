@@ -1,6 +1,6 @@
 # Stitch Multi-Cloud Text-to-Speech
 
-[![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
+[![.NET 9](https://img.shields.io/badge/.NET-9.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
 [![Blazor WebAssembly](https://img.shields.io/badge/Blazor-WASM-512BD4)](https://dotnet.microsoft.com/apps/aspnet/web-apps/blazor)
 [![MudBlazor](https://img.shields.io/badge/MudBlazor-8.0-594AE2)](https://mudblazor.com/)
 [![PWA](https://img.shields.io/badge/PWA-Enabled-5A0FC8)](https://web.dev/progressive-web-apps/)
