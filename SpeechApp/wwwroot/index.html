@@ -158,49 +158,44 @@
 
     <!-- eSpeak-NG using meSpeak.js library -->
     <!-- meSpeak.js - A JavaScript port of eSpeak that can export WAV files -->
+    <!-- Load meSpeak from jsDelivr CDN (more reliable than masswerk.at) -->
+    <script src="https://cdn.jsdelivr.net/npm/mespeak@2.0.2/src/index.js"></script>
     <script>
-        // Load meSpeak library and configure it
-        (function() {
-            const script = document.createElement('script');
-            script.src = 'https://www.masswerk.at/mespeak/mespeak.js';
-            script.async = true;
+        // Configure meSpeak after it loads
+        (async function() {
+            // Wait a moment for the library to fully initialize
+            await new Promise(resolve => setTimeout(resolve, 200));
 
-            script.onload = async function() {
-                console.log('✅ meSpeak.js script loaded');
+            if (typeof window.meSpeak !== 'undefined' && window.meSpeak !== null) {
+                try {
+                    console.log('🔧 Initializing meSpeak library...');
 
-                if (typeof window.meSpeak !== 'undefined') {
-                    try {
-                        console.log('🔧 Initializing meSpeak library...');
+                    // Load default config from jsDelivr
+                    await new Promise((resolve) => {
+                        window.meSpeak.loadConfig('https://cdn.jsdelivr.net/npm/mespeak@2.0.2/src/mespeak_config.json');
+                        setTimeout(resolve, 600);
+                    });
+                    console.log('✅ meSpeak config loaded');
 
-                        // Load default config
-                        await new Promise((resolve) => {
-                            meSpeak.loadConfig('https://www.masswerk.at/mespeak/mespeak_config.json');
-                            setTimeout(resolve, 500);
-                        });
-                        console.log('✅ meSpeak config loaded');
+                    // Load default English voice from jsDelivr
+                    await new Promise((resolve) => {
+                        window.meSpeak.loadVoice('https://cdn.jsdelivr.net/npm/mespeak@2.0.2/voices/en/en-us.json');
+                        setTimeout(resolve, 600);
+                    });
+                    console.log('✅ meSpeak voice loaded');
 
-                        // Load default English voice
-                        await new Promise((resolve) => {
-                            meSpeak.loadVoice('https://www.masswerk.at/mespeak/voices/en/en-us.json');
-                            setTimeout(resolve, 500);
-                        });
-                        console.log('✅ meSpeak voice loaded');
-
-                        console.log('✅ meSpeak initialized successfully');
-                    } catch (error) {
-                        console.error('❌ Error loading meSpeak:', error);
-                    }
-                } else {
-                    console.error('❌ meSpeak library loaded but window.meSpeak is undefined');
+                    console.log('✅ meSpeak initialized successfully');
+                } catch (error) {
+                    console.error('❌ Error loading meSpeak:', error);
                 }
-            };
-
-            script.onerror = function() {
-                console.error('❌ Failed to load meSpeak.js from CDN');
-                console.log('Check network connectivity and CDN availability: https://www.masswerk.at/mespeak/');
-            };
-
-            document.head.appendChild(script);
+            } else {
+                console.warn('⚠️ meSpeak library not available. eSpeak-NG will be disabled.');
+                console.log('This may be due to:');
+                console.log('  - CDN connectivity issues');
+                console.log('  - Browser blocking third-party scripts');
+                console.log('  - CORS restrictions');
+                console.log('Falling back to Piper TTS for offline synthesis.');
+            }
         })();
     </script>
     <script src="js/piper-tts.js"></script>
